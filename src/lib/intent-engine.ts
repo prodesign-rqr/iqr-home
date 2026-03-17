@@ -50,13 +50,14 @@ function findMonitoringZone(question: string) {
       .join(" ")
       .toLowerCase();
 
-    return q.includes(zone.name.toLowerCase()) || q.includes(zone.protectedPoint ?? "").toLowerCase()) || haystack.includes(q);
+    return q.includes(zone.name.toLowerCase()) || q.includes((zone.protectedPoint ?? "").toLowerCase()) || haystack.includes(q);
   });
 }
 
 function detectIntent(question: string): string | null {
   const q = lower(question);
   const ranked = intentMap
+
     .map((definition) => {
       const score = definition.keywords.reduce((total, keyword) => total + (q.includes(keyword) ? 1 : 0), 0);
       return { intent: definition.intent, score };

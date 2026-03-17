@@ -1,4 +1,4 @@
-import { PropertyRecord } from "@/lib/types";
+import { PropertyRecord } from "../lib/types";
  
 export default function Timeline({ record }: { record: PropertyRecord }) {
   return (

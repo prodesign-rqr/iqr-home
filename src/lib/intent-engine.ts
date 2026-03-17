@@ -50,7 +50,7 @@ function findMonitoringZone(question: string) {
       .join(" ")
       .toLowerCase();
 
-    return q.includes(zone.name.toLowerCase()) || q.includes(zone.protectedPoint.toLowerCase()) || haystack.includes(q);
+    return q.includes(zone.name.toLowerCase()) || q.includes(zone.protectedPoint ?? "").toLowerCase()) || haystack.includes(q);
   });
 }
 

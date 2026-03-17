@@ -1,4 +1,4 @@
-import { PropertyRecord } from "@/lib/types";
+import { PropertyRecord } from "../lib/types";
  
 export default function ProofOfPreventionCard({ record }: { record: PropertyRecord }) {
   const point = record.waterRiskPoints.find((item) => item.fixture_name === "Dishwasher");

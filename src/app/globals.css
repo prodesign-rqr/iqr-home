@@ -476,7 +476,7 @@ code.inline {
   display:  block;
   width:  220px;
   height:  auto;
-  max-width:  100%
+  max-width:  100%;
 }
 
 .subnav-current-dot  {
@@ -488,5 +488,3 @@ code.inline {
    font-size:  1rem;
    line-height:  1;
  }
-
-}

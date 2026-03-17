@@ -95,7 +95,7 @@ export default function ServiceEventsPage() {
                 <strong>{event.title}</strong>
                 <div>{event.description}</div>
                 <div className="muted small">
-                  {event.eventAt} | Source: {event.source} | Related object: {event.relatedObjectId ?? "N/A"}
+                  {event.eventAt} | Source: {event.source} | Related object: {event.relatedObjectIds ?? "N/A"}
                 </div>
               </div>
             ))}

@@ -457,7 +457,7 @@ code.inline {
     align-items:  center;
     gap:  14px;
     margin-left:  14px;
-    width:  100%
+    width:  100%;
   }
 
 .hero .hero-title  {
@@ -483,7 +483,6 @@ code.inline {
    display: inline-flex;
    align-items:  center;
    justify-content:  center;
-   padding:  8px 0 8px  10px;
    color:  #9fb0ff;
    font-size:  1rem;
    line-height:  1;

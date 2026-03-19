@@ -1,5 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
+import {
+  onboardingFlow,
+  onboardingProperties,
+  onboardingStatuses,
+} from "../../lib/onboarding-pipeline-v1";
+
+function countByStatus(status: string) {
+  return onboardingProperties.filter((property) => property.currentStatus === status).length;
+}
 
 export default function HQPage() {
   return (
@@ -16,18 +25,26 @@ export default function HQPage() {
           />
         </div>
 
-        <h1>IQR HQ Admin</h1>
+        <h1>HQ Admin</h1>
         <p>
-          Separate HQ entry for partner management, configurator review, record correction,
-          onboarding pipeline control, and support functions.
+          IQR HQ oversight for onboarding review, status control, record correction,
+          and startup release decisions. This is the admin side of workflow support v1.
         </p>
 
         <div className="subpage-nav">
-          <Link href="/" className="subpage-nav-home">Back to Home</Link>
-
+          <Link href="/" className="subpage-nav-home">
+            Back to Home
+          </Link>
           <div className="subpage-nav-links">
-            <Link href="/partner" className="subnav-pill">Partner Entry</Link>
-            <Link href="/partner/questionnaire" className="subnav-pill">Questionnaire v1</Link>
+            <Link href="/partner" className="subpage-nav-link">
+              Partner Entry
+            </Link>
+            <Link href="/partner/questionnaire" className="subpage-nav-link">
+              Questionnaire v1
+            </Link>
+            <Link href="/partner/outputs" className="subpage-nav-link">
+              Outputs
+            </Link>
           </div>
         </div>
       </section>
@@ -36,49 +53,112 @@ export default function HQPage() {
         <div className="section-header">
           <div>
             <h2>Onboarding Pipeline</h2>
-            <p className="muted">HQ receives new-property alerts and controls setup review.</p>
+            <p className="muted">Status buckets required for HQ review visibility and control.</p>
           </div>
           <div className="status-pill">HQ Protected</div>
         </div>
 
-        <div className="grid two-col">
-          <div className="metric-card"><div className="metric-label">New</div><div className="metric-value">3</div></div>
-          <div className="metric-card"><div className="metric-label">In Process</div><div className="metric-value">5</div></div>
-          <div className="metric-card"><div className="metric-label">Needs Additional Information</div><div className="metric-value">2</div></div>
-          <div className="metric-card"><div className="metric-label">Ready to Ship</div><div className="metric-value">4</div></div>
-          <div className="metric-card"><div className="metric-label">Completed</div><div className="metric-value">18</div></div>
+        <div className="summary-grid five-up">
+          {onboardingStatuses.map((status) => (
+            <div className="summary-card compact" key={status}>
+              <div className="status-pill">{status}</div>
+              <h3>{countByStatus(status)}</h3>
+              <p>{status} properties</p>
+            </div>
+          ))}
         </div>
       </section>
 
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Status History Requirements</h2>
-            <p className="muted">Every property must preserve onboarding history as part of continuity.</p>
+            <h2>Workflow Control Rail</h2>
+            <p className="muted">The same flow, seen from HQ with review responsibility attached.</p>
           </div>
         </div>
 
-        <div className="bullet-list">
-          <div className="list-card"><strong>Status</strong><div>New, In Process, Needs Additional Information, Ready to Ship, Completed.</div></div>
-          <div className="list-card"><strong>Timestamp</strong><div>Every status change must include the exact recorded time.</div></div>
-          <div className="list-card"><strong>Changed by</strong><div>Partner or HQ user identity must be preserved.</div></div>
-          <div className="list-card"><strong>Notes</strong><div>Short explanation of what changed or what is blocking progress.</div></div>
+        <div className="workflow-rail">
+          {onboardingFlow.map((step, index) => (
+            <div className="workflow-step" key={step}>
+              <div className="workflow-index">{index + 1}</div>
+              <div>
+                <strong>{step}</strong>
+                <div className="muted small">HQ review stays attached to this stage.</div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>HQ Functions in Scope</h2>
-            <p className="muted">This phase supports workflow control before deeper automation.</p>
+            <h2>Property Onboarding Queue</h2>
+            <p className="muted">Mock queue for status history, next action control, and setup review.</p>
           </div>
         </div>
 
-        <div className="bullet-list">
-          <div className="list-card"><strong>Partner management</strong><div>Review and support partner submissions without exposing HQ controls publicly.</div></div>
-          <div className="list-card"><strong>Property oversight</strong><div>Watch onboarding progress, startup outputs, and record completion.</div></div>
-          <div className="list-card"><strong>Record correction</strong><div>Correct structured data when uploads, OCR, or intake answers need adjustment.</div></div>
-          <div className="list-card"><strong>Configurator review</strong><div>Validate startup outputs before release to partner operations and field install.</div></div>
+        <div className="pipeline-board">
+          {onboardingProperties.map((property) => (
+            <div className="pipeline-card" key={property.id}>
+              <div className="pipeline-card-top">
+                <div>
+                  <h3>{property.propertyName}</h3>
+                  <p className="muted">{property.streetAddress}</p>
+                </div>
+                <div className="status-pill">{property.currentStatus}</div>
+              </div>
+
+              <div className="meta-grid">
+                <div>
+                  <strong>Property ID</strong>
+                  <div>{property.id}</div>
+                </div>
+                <div>
+                  <strong>Parcel/APN</strong>
+                  <div>{property.parcelApn}</div>
+                </div>
+                <div>
+                  <strong>Partner</strong>
+                  <div>{property.partnerName}</div>
+                </div>
+                <div>
+                  <strong>Continuity owner</strong>
+                  <div>{property.continuityOwner}</div>
+                </div>
+              </div>
+
+              <p>
+                <strong>Next action:</strong> {property.nextAction}
+              </p>
+              <p className="muted">{property.notes}</p>
+
+              <div className="badge-row">
+                {property.startupOutputs.map((item) => (
+                  <span className="mini-badge" key={item}>
+                    {item}
+                  </span>
+                ))}
+              </div>
+
+              <div className="history-table">
+                <div className="history-row history-head">
+                  <div>Status</div>
+                  <div>Timestamp</div>
+                  <div>Changed by</div>
+                  <div>Notes</div>
+                </div>
+                {property.statusHistory.map((entry, index) => (
+                  <div className="history-row" key={`${property.id}-${index}`}>
+                    <div>{entry.status}</div>
+                    <div>{entry.timestamp}</div>
+                    <div>{entry.changedBy}</div>
+                    <div>{entry.notes}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </main>

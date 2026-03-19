@@ -195,7 +195,7 @@ export default function QuestionnairePage() {
 
           <div className="checkbox-grid">
             <label className="checkbox-item"><input type="checkbox" /> Dishwasher protection</label>
-            <label className="checkbox-item"><input type="checkbox" /> Clothes washer protection</label>
+            <label className="checkbox-item"><input type="checkbox" /> Toilet protection</label>
             <label className="checkbox-item"><input type="checkbox" /> Clothes washer protection</label>
             <label className="checkbox-item"><input type="checkbox" /> Refrigerator / ice maker protection</label>
             <label className="checkbox-item"><input type="checkbox" /> Water heater pan protection</label>

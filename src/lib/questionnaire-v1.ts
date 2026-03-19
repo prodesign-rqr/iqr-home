@@ -50,6 +50,7 @@ export const questionnaireSpec = [
     purpose: "Scope YoLink sensing and shutoff opportunities.",
     fields: [
       ["Dishwasher protection", "checkbox", "monitoring.waterRisk.dishwasher.protected"],
+      ["Toilet supply line protection", "checkbox", "monitoring.waterRisk.toiletsProtected"],
       ["Clothes washer protection", "checkbox", "monitoring.waterRisk.clothesWasher.protected"],
       ["Refrigerator / ice maker protection", "checkbox", "monitoring.waterRisk.fridgeIce.protected"],
       ["Water heater pan protection", "checkbox", "monitoring.waterRisk.waterHeaterPan.protected"],

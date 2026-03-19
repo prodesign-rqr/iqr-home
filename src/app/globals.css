@@ -595,4 +595,102 @@ code.inline {
   }
 }
 
+.spec-table {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.spec-table-head,
+.spec-table-row {
+  display: grid;
+  grid-template-columns: 1.1fr 2.2fr 0.6fr;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.spec-table-head {
+  background: rgba(138, 155, 255, 0.12);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.spec-table-row {
+  border-top: 1px solid var(--line);
+  align-items: start;
+}
+
+.spec-table-head.four-col,
+.spec-table-row.four-col {
+  grid-template-columns: 1.1fr 0.9fr 1.4fr 1fr;
+}
+
+.mapping-grid,
+.output-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.output-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  text-decoration: none;
+}
+
+.output-card.static-card {
+  cursor: default;
+}
+
+.clean-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.checklist-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.checklist-item {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.check-index {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(138, 155, 255, 0.5);
+  background: rgba(138, 155, 255, 0.14);
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .spec-table-head,
+  .spec-table-row,
+  .spec-table-head.four-col,
+  .spec-table-row.four-col,
+  .mapping-grid,
+  .output-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 

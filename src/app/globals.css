@@ -854,3 +854,27 @@ code.inline {
   }
 }
 
+.form-field select {
+  appearance: auto;
+  -webkit-appearance: menulist;
+  background: var(--panel);
+  background-color: var(--panel);
+  color: var(--text);
+  color-scheme: dark;
+}
+
+.form-field select option {
+  background: #0b0f14;
+  background-color: #0b0f14;
+  color: #ecf3ff;
+}
+
+.form-field select option:checked {
+  background: #162033;
+  background-color: #162033;
+  color: #ffffff;
+}
+
+.form-field select option[disabled] {
+  color: var(--muted);
+}

@@ -7,8 +7,8 @@ import { loadQuestionnaireStateV1 } from "../../../../lib/questionnaire-state-v1
 import { buildPropertyRecordShell } from "../../../../lib/output-mappers-v1";
 
 export default function PropertyRecordShellPage() {
-  const state = useMemo(() => loadQuestionnaireStateV1(), []);
-  const items = useMemo(() => buildPropertyRecordShell(state), [state]);
+  const state = useMemo(() => loadQuestionnaireStateV1() as any, []);
+  const blocks = useMemo(() => buildPropertyRecordShell(state), [state]);
 
   return (
     <main>
@@ -23,17 +23,12 @@ export default function PropertyRecordShellPage() {
             priority
           />
         </div>
-
         <h1>Property Record Shell</h1>
-        <p>Structured shell seeded from the questionnaire before full onboarding and document confirmation.</p>
-
+        <p>Structured shell blocks anchored to identity, continuity, and first-pass scope.</p>
         <div className="subpage-nav">
-          <Link href="/" className="subpage-nav-home">Back to Home</Link>
-
-          <div className="subpage-nav-links">
-            <Link href="/partner/questionnaire" className="subnav-pill">Questionnaire</Link>
-            <Link href="/partner/outputs" className="subnav-pill">Outputs</Link>
-          </div>
+          <Link href="/partner/outputs" className="subpage-nav-home">
+            Back to Outputs
+          </Link>
         </div>
       </section>
 
@@ -41,15 +36,19 @@ export default function PropertyRecordShellPage() {
         <div className="section-header">
           <div>
             <h2>Shell Blocks</h2>
-            <p className="muted">Initial property memory structure generated before field verification.</p>
+            <p className="muted">This page defines the first-pass record scaffold generated from the draft.</p>
           </div>
+          <div className="status-pill">Record Shell</div>
         </div>
 
-        <div className="bullet-list">
-          {items.map((item, index) => (
-            <div className="list-card" key={`${item.title}-${index}`}>
-              <strong>{item.title}</strong>
-              <div>{item.detail}</div>
+        <div className="output-detail-stack">
+          {blocks.map((block) => (
+            <div className="output-detail-card" key={block.title}>
+              <div className="detail-card-top">
+                <strong>{block.title}</strong>
+                <span className="qty-chip">{block.status}</span>
+              </div>
+              <p>{block.description}</p>
             </div>
           ))}
         </div>
@@ -57,4 +56,3 @@ export default function PropertyRecordShellPage() {
     </main>
   );
 }
-

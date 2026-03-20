@@ -7,7 +7,7 @@ import { loadQuestionnaireStateV1 } from "../../../../lib/questionnaire-state-v1
 import { buildStartupKit } from "../../../../lib/output-mappers-v1";
 
 export default function StartupKitPage() {
-  const state = useMemo(() => loadQuestionnaireStateV1(), []);
+  const state = useMemo(() => loadQuestionnaireStateV1() as any, []);
   const items = useMemo(() => buildStartupKit(state), [state]);
 
   return (
@@ -23,33 +23,32 @@ export default function StartupKitPage() {
             priority
           />
         </div>
-
-        <h1>Startup Kit</h1>
-        <p>Questionnaire-driven recommendation set for labels, cards, sensors, and onboarding hardware.</p>
-
+        <h1>Kit Contents v2</h1>
+        <p>This list can later become quantity-aware and partner-specific.</p>
         <div className="subpage-nav">
-          <Link href="/" className="subpage-nav-home">Back to Home</Link>
-
-          <div className="subpage-nav-links">
-            <Link href="/partner/questionnaire" className="subnav-pill">Questionnaire</Link>
-            <Link href="/partner/outputs" className="subnav-pill">Outputs</Link>
-          </div>
+          <Link href="/partner/outputs" className="subpage-nav-home">
+            Back to Outputs
+          </Link>
         </div>
       </section>
 
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Startup Kit Recommendations</h2>
-            <p className="muted">Generated from the active questionnaire draft.</p>
+            <h2>Startup Kit</h2>
+            <p className="muted">First-pass startup package generated from the current saved draft.</p>
           </div>
+          <div className="status-pill">Startup Kit</div>
         </div>
 
-        <div className="bullet-list">
-          {items.map((item, index) => (
-            <div className="list-card" key={`${item.title}-${index}`}>
-              <strong>{item.title}</strong>
-              <div>{item.detail}</div>
+        <div className="output-detail-stack">
+          {items.map((item) => (
+            <div className="output-detail-card" key={item.label}>
+              <div className="detail-card-top">
+                <strong>{item.label}</strong>
+                <span className="qty-chip">Included</span>
+              </div>
+              <p>{item.reason}</p>
             </div>
           ))}
         </div>
@@ -57,4 +56,3 @@ export default function StartupKitPage() {
     </main>
   );
 }
-

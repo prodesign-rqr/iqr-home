@@ -7,7 +7,7 @@ import { loadQuestionnaireStateV1 } from "../../../../lib/questionnaire-state-v1
 import { buildFieldInstallChecklist } from "../../../../lib/output-mappers-v1";
 
 export default function FieldInstallChecklistPage() {
-  const state = useMemo(() => loadQuestionnaireStateV1(), []);
+  const state = useMemo(() => loadQuestionnaireStateV1() as any, []);
   const items = useMemo(() => buildFieldInstallChecklist(state), [state]);
 
   return (
@@ -23,33 +23,32 @@ export default function FieldInstallChecklistPage() {
             priority
           />
         </div>
-
         <h1>Field Install Checklist</h1>
-        <p>Partner-facing install tasks generated directly from the questionnaire state.</p>
-
+        <p>First-pass install tasks generated from the current saved questionnaire draft.</p>
         <div className="subpage-nav">
-          <Link href="/" className="subpage-nav-home">Back to Home</Link>
-
-          <div className="subpage-nav-links">
-            <Link href="/partner/questionnaire" className="subnav-pill">Questionnaire</Link>
-            <Link href="/partner/outputs" className="subnav-pill">Outputs</Link>
-          </div>
+          <Link href="/partner/outputs" className="subpage-nav-home">
+            Back to Outputs
+          </Link>
         </div>
       </section>
 
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Generated Install Tasks</h2>
-            <p className="muted">First-pass field checklist based on the saved questionnaire draft.</p>
+            <h2>Field Tasks</h2>
+            <p className="muted">Use this list as the handoff between design intake and field execution.</p>
           </div>
+          <div className="status-pill">Checklist</div>
         </div>
 
-        <div className="bullet-list">
+        <div className="output-detail-stack">
           {items.map((item, index) => (
-            <div className="list-card" key={`${item.title}-${index}`}>
-              <strong>{item.title}</strong>
-              <div>{item.detail}</div>
+            <div className="output-detail-card" key={`${item.task}-${index}`}>
+              <div className="detail-card-top">
+                <strong>{item.task}</strong>
+                <span className="qty-chip">{item.owner}</span>
+              </div>
+              <p>{item.notes}</p>
             </div>
           ))}
         </div>
@@ -57,4 +56,3 @@ export default function FieldInstallChecklistPage() {
     </main>
   );
 }
-

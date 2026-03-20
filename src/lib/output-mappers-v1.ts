@@ -1,197 +1,340 @@
-import type { QuestionnaireStateV1 } from "./questionnaire-state-v1";
+export type LooseObject = Record<string, any>;
 
-export type OutputItem = {
-  title: string;
-  detail: string;
+export type TagItem = {
+  label: string;
+  code: string;
+  destination: string;
 };
 
-export function buildQrTagPlan(state: QuestionnaireStateV1): OutputItem[] {
-  const items: OutputItem[] = [
-    {
-      title: "Property anchor tag",
-      detail: `Parcel/APN ${state.propertyBasics.parcelApn || "Pending"} linked to ${state.propertyBasics.streetAddress || "street address pending"}.`,
-    },
-  ];
+export type StartupKitItem = {
+  label: string;
+  reason: string;
+};
 
-  if (state.avit.mainRackPresent) {
-    items.push({
-      title: "Primary AV rack tag",
-      detail: `Rack location: ${state.avit.rackLocation || "location pending confirmation"}.`,
-    });
-  }
+export type ChecklistItem = {
+  task: string;
+  owner: string;
+  notes: string;
+};
 
-  if (state.avit.managedGateway) {
-    items.push({
-      title: "Gateway / network core tag",
-      detail: "Add QR identity for gateway and ISP-facing network record.",
-    });
-  }
+export type PropertyRecordBlock = {
+  title: string;
+  description: string;
+  status: string;
+};
 
-  if (state.avit.controlProcessor) {
-    items.push({
-      title: "Control engine tag",
-      detail: "Create object label for the control processor and associated documentation.",
-    });
-  }
+export type CounterCardConfig = {
+  ready: boolean;
+  enabled: boolean;
+  streetAddress: string;
+};
 
-  if (state.waterRisk.dishwasherProtected) {
-    items.push({
-      title: "Dishwasher protection tag",
-      detail: "Tie leak protection point to the kitchen dishwasher bay record.",
-    });
-  }
+export type OutputSummaryV1 = {
+  qrPlanCount: number;
+  qrTagCount: number;
+  startupKitCount: number;
+  checklistCount: number;
+  propertyRecordCount: number;
+  propertyShellCount: number;
+  counterCardReady: boolean;
+};
 
-  if (state.waterRisk.toiletsProtected) {
-    items.push({
-      title: "Toilet supply line tags",
-      detail: "Create toilet supply line protection tags for each documented bathroom group.",
-    });
-  }
-
-  if (state.waterRisk.refrigeratorProtected) {
-    items.push({
-      title: "Refrigerator / ice maker tag",
-      detail: "Mark the kitchen refrigeration protection point for future service reference.",
-    });
-  }
-
-  return items;
+function asObject(input: unknown): LooseObject {
+  return input && typeof input === "object" ? (input as LooseObject) : {};
 }
 
-export function buildCounterCardConfig(state: QuestionnaireStateV1): OutputItem[] {
-  return [
-    {
-      title: "Counter Card mode",
-      detail: state.counterCard.mode || "Mode not selected yet.",
-    },
-    {
-      title: "Guest network name",
-      detail: state.counterCard.guestNetworkName || "Guest network display name not yet set.",
-    },
-    {
-      title: "Public entry doctrine",
-      detail: "Public-facing card supports Scan-2-Know, Scan-2-Join, and only the allowed house-record surfaces.",
-    },
-  ];
+function section(state: unknown, key: string): LooseObject {
+  return asObject(asObject(state)[key]);
 }
 
-export function buildStartupKit(state: QuestionnaireStateV1): OutputItem[] {
-  const items: OutputItem[] = [
-    {
-      title: "Baseline kit",
-      detail: "Counter Card, QR labels, property startup packet, and field install packet.",
-    },
-  ];
-
-  if (state.avit.mainRackPresent) {
-    items.push({
-      title: "AV / IT labeling set",
-      detail: "Rack, gateway, PoE switching, AP, and control labels for structured record startup.",
-    });
-  }
-
-  if (
-    state.waterRisk.dishwasherProtected ||
-    state.waterRisk.toiletsProtected ||
-    state.waterRisk.clothesWasherProtected ||
-    state.waterRisk.refrigeratorProtected ||
-    state.waterRisk.waterHeaterProtected ||
-    state.waterRisk.sinkCabinetProtected
-  ) {
-    items.push({
-      title: "YoLink water-risk package",
-      detail: "Sensor and shutoff planning kit aligned to selected protection points.",
-    });
-  }
-
-  if (
-    state.environmental.rackTemperature ||
-    state.environmental.garageFreezer ||
-    state.environmental.wineRoom ||
-    state.environmental.artCollectionRoom ||
-    state.environmental.mechanicalRoom ||
-    state.environmental.pantryFoodStorage
-  ) {
-    items.push({
-      title: "Environmental monitoring kit",
-      detail: "Temperature / humidity sensor plan tied to meaningful-event recording only.",
-    });
-  }
-
-  return items;
+function yes(value: unknown): boolean {
+  return value === true;
 }
 
-export function buildPropertyRecordShell(state: QuestionnaireStateV1): OutputItem[] {
-  return [
-    {
-      title: "Property identity",
-      detail: `Parcel/APN ${state.propertyBasics.parcelApn || "Pending"} with address ${state.propertyBasics.streetAddress || "pending"} and occupancy ${state.propertyBasics.occupancyType || "pending"}.`,
-    },
-    {
-      title: "People and roles",
-      detail: `Owner: ${state.peopleRoles.clientOwner || "pending"} | PM: ${state.peopleRoles.propertyManager || "pending"} | TIS owner: ${state.peopleRoles.tisOwner || "pending"}.`,
-    },
-    {
-      title: "AV / IT baseline",
-      detail: `Rack present: ${state.avit.mainRackPresent ? "Yes" : "No"} | Gateway: ${state.avit.managedGateway ? "Yes" : "No"} | Control engine: ${state.avit.controlProcessor ? "Yes" : "No"}.`,
-    },
-    {
-      title: "Monitoring scope",
-      detail: `Water-risk scope and environmental zones derived from questionnaire toggles; YoLink records meaningful events while IQR preserves the structured memory.`,
-    },
-  ];
+function text(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
 }
 
-export function buildFieldInstallChecklist(state: QuestionnaireStateV1): OutputItem[] {
-  const items: OutputItem[] = [
-    {
-      title: "Confirm property anchor",
-      detail: `Verify Parcel/APN ${state.propertyBasics.parcelApn || "pending"} and street address at first site touch.`,
-    },
-    {
-      title: "Confirm partner workflow owner",
-      detail: `Confirm TIS owner / project lead: ${state.peopleRoles.tisOwner || "pending"}.`,
-    },
-  ];
+export function buildCounterCardConfig(state: unknown): CounterCardConfig {
+  const propertyBasics = section(state, "propertyBasics");
+  const streetAddress = text(propertyBasics.streetAddress, "Property address not set");
 
-  if (state.avit.mainRackPresent) {
-    items.push({
-      title: "Photograph and tag primary rack",
-      detail: `Document rack at ${state.avit.rackLocation || "confirmed rack location"} and align labels to the property record shell.`,
-    });
-  }
-
-  if (state.waterRisk.toiletsProtected) {
-    items.push({
-      title: "Confirm toilet supply line protection points",
-      detail: "Document bathroom groups, supply line locations, and local shutoff scope.",
-    });
-  }
-
-  if (state.counterCard.mode) {
-    items.push({
-      title: "Configure Counter Card",
-      detail: `Apply selected mode: ${state.counterCard.mode}.`,
-    });
-  }
-
-  if (state.stewardship.yearlyUpdate) {
-    items.push({
-      title: "Set stewardship cadence",
-      detail: `Yearly update preference: ${state.stewardship.yearlyUpdate}.`,
-    });
-  }
-
-  return items;
-}
-
-export function buildOutputSummary(state: QuestionnaireStateV1) {
   return {
-    qrTagCount: buildQrTagPlan(state).length,
-    startupKitCount: buildStartupKit(state).length,
-    checklistCount: buildFieldInstallChecklist(state).length,
-    recordShellCount: buildPropertyRecordShell(state).length,
-    counterCardReady: Boolean(state.counterCard.mode || state.counterCard.guestNetworkName),
+    ready: streetAddress !== "Property address not set",
+    enabled: true,
+    streetAddress,
   };
 }
 
+export function buildTagItems(state: unknown): TagItem[] {
+  const avit = section(state, "avit");
+  const majorSystems = section(state, "majorSystems");
+  const waterRisk = section(state, "waterRisk");
+
+  const items: TagItem[] = [];
+
+  if (yes(avit.mainRackPresent)) {
+    items.push({
+      label: "Main Rack",
+      code: "IQR-AV-001",
+      destination: "Rack / AV / IT baseline",
+    });
+  }
+
+  if (yes(avit.managedGateway) || yes(avit.wifiAccessPoints) || yes(avit.poeSwitching)) {
+    items.push({
+      label: "Network Gateway",
+      code: "IQR-NET-001",
+      destination: "Counter Card + network record",
+    });
+  }
+
+  if (yes(avit.controlProcessor)) {
+    items.push({
+      label: "Control Processor",
+      code: "IQR-CTL-001",
+      destination: "Control subsystem record",
+    });
+  }
+
+  if (yes(majorSystems.hvac)) {
+    items.push({
+      label: "HVAC System",
+      code: "IQR-MECH-001",
+      destination: "Mechanical system record",
+    });
+  }
+
+  if (yes(majorSystems.waterHeater)) {
+    items.push({
+      label: "Water Heater",
+      code: "IQR-PLB-001",
+      destination: "Water heater record",
+    });
+  }
+
+  if (yes(waterRisk.dishwasherProtected)) {
+    items.push({
+      label: "Dishwasher",
+      code: "IQR-WAT-001",
+      destination: "Dishwasher protection point",
+    });
+  }
+
+  if (yes(waterRisk.refrigeratorProtected)) {
+    items.push({
+      label: "Refrigerator / ice maker",
+      code: "IQR-WAT-002",
+      destination: "Refrigerator water-risk point",
+    });
+  }
+
+  if (yes(waterRisk.toiletsProtected)) {
+    items.push({
+      label: "Toilet supply lines",
+      code: "IQR-WAT-003",
+      destination: "Toilet protection points",
+    });
+  }
+
+  if (yes(waterRisk.clothesWasherProtected)) {
+    items.push({
+      label: "Clothes Washer",
+      code: "IQR-WAT-004",
+      destination: "Laundry water-risk point",
+    });
+  }
+
+  if (yes(waterRisk.waterHeaterPanProtected)) {
+    items.push({
+      label: "Water Heater Pan",
+      code: "IQR-WAT-005",
+      destination: "Water heater pan protection point",
+    });
+  }
+
+  if (yes(waterRisk.sinkCabinetProtected)) {
+    items.push({
+      label: "Sink Cabinets",
+      code: "IQR-WAT-006",
+      destination: "Sink cabinet protection points",
+    });
+  }
+
+  return items;
+}
+
+export const buildQrTagPlan = buildTagItems;
+
+export function buildStartupKitItems(state: unknown): StartupKitItem[] {
+  const waterRisk = section(state, "waterRisk");
+  const tagItems = buildTagItems(state);
+
+  const items: StartupKitItem[] = [
+    {
+      label: "Kitchen Counter Card",
+      reason: "Included in the first-pass startup package.",
+    },
+    {
+      label: "Private-area QR cards",
+      reason: "Included when partner setup and room access records are active.",
+    },
+    {
+      label: "QR label starter pack",
+      reason: tagItems.length > 0
+        ? "Generated because mapped tag targets are already in scope."
+        : "Hold until mapped tag targets are confirmed.",
+    },
+    {
+      label: "Property onboarding packet",
+      reason: "Included in the first-pass startup package.",
+    },
+  ];
+
+  const protectedWaterPoints =
+    yes(waterRisk.dishwasherProtected) ||
+    yes(waterRisk.toiletsProtected) ||
+    yes(waterRisk.clothesWasherProtected) ||
+    yes(waterRisk.refrigeratorProtected) ||
+    yes(waterRisk.waterHeaterPanProtected) ||
+    yes(waterRisk.sinkCabinetProtected);
+
+  if (protectedWaterPoints) {
+    items.push({
+      label: "YoLink sensors for protected points",
+      reason: "Included because water-risk protection points are selected.",
+    });
+  }
+
+  if (yes(waterRisk.localShutoffInScope)) {
+    items.push({
+      label: "Local shutoff devices for scoped locations",
+      reason: "Included because local shutoff scope is active.",
+    });
+  }
+
+  return items;
+}
+
+export const buildStartupKit = buildStartupKitItems;
+
+export function buildFieldInstallChecklist(state: unknown): ChecklistItem[] {
+  const avit = section(state, "avit");
+  const waterRisk = section(state, "waterRisk");
+
+  const items: ChecklistItem[] = [
+    {
+      task: "Program and place Kitchen Counter Card",
+      owner: "Field tech",
+      notes: "Confirm guest-facing orientation and network handoff behavior.",
+    },
+    {
+      task: "Apply first-pass QR labels",
+      owner: "Field tech",
+      notes: "Rack, network, and protected-point labels should match the current mapped output set.",
+    },
+    {
+      task: "Verify property record shell",
+      owner: "Project manager",
+      notes: "Anchor the property record to parcel/APN, street address, and continuity contacts.",
+    },
+    {
+      task: "Confirm startup kit contents with partner",
+      owner: "Partner PM",
+      notes: "Verify what ships now versus what waits for later install phases.",
+    },
+  ];
+
+  if (yes(avit.mainRackPresent) || yes(avit.managedGateway) || yes(avit.wifiAccessPoints)) {
+    items.push({
+      task: "Document AV / IT rack baseline",
+      owner: "Field tech",
+      notes: "Capture rack location, gateway posture, Wi-Fi posture, and conditioned power notes.",
+    });
+  }
+
+  if (
+    yes(waterRisk.dishwasherProtected) ||
+    yes(waterRisk.toiletsProtected) ||
+    yes(waterRisk.clothesWasherProtected) ||
+    yes(waterRisk.refrigeratorProtected) ||
+    yes(waterRisk.waterHeaterPanProtected) ||
+    yes(waterRisk.sinkCabinetProtected)
+  ) {
+    items.push({
+      task: "Validate YoLink protection points",
+      owner: "Field tech",
+      notes: "Confirm each selected water-risk point has the expected sensing and labeling.",
+    });
+  }
+
+  if (yes(waterRisk.localShutoffInScope)) {
+    items.push({
+      task: "Test local shutoff devices",
+      owner: "Field tech",
+      notes: "Confirm shutoff locations, power, and handoff notes before closeout.",
+    });
+  }
+
+  return items;
+}
+
+export function buildPropertyRecordShell(state: unknown): PropertyRecordBlock[] {
+  const propertyBasics = section(state, "propertyBasics");
+  const peopleRoles = section(state, "peopleRoles");
+  const avit = section(state, "avit");
+
+  return [
+    {
+      title: "Property Identity",
+      description: `${text(propertyBasics.parcelApn, "Parcel/APN pending")} / ${text(
+        propertyBasics.streetAddress,
+        "Street address pending"
+      )}`,
+      status: "Anchored",
+    },
+    {
+      title: "People and Roles",
+      description: `${text(peopleRoles.clientOwner, "Owner contact pending")} / ${text(
+        peopleRoles.tisOwner,
+        "Integrator pending"
+      )}`,
+      status: "In scope",
+    },
+    {
+      title: "AV / IT Baseline",
+      description: `${text(avit.rackLocation, "Rack location pending")} / ${text(
+        avit.networkNotes,
+        "Network notes pending"
+      )}`,
+      status: "Draft shell",
+    },
+    {
+      title: "Water-Risk Profile",
+      description: `${buildTagItems(state)
+        .filter((item) => item.code.startsWith("IQR-WAT"))
+        .length} protected points mapped`,
+      status: "Monitoring ready",
+    },
+  ];
+}
+
+export const buildPropertyRecord = buildPropertyRecordShell;
+
+export function buildOutputSummary(state: unknown): OutputSummaryV1 {
+  const qrItems = buildTagItems(state);
+  const startupKitItems = buildStartupKitItems(state);
+  const checklistItems = buildFieldInstallChecklist(state);
+  const propertyRecordBlocks = buildPropertyRecordShell(state);
+  const counterCard = buildCounterCardConfig(state);
+
+  return {
+    qrPlanCount: qrItems.length,
+    qrTagCount: qrItems.length,
+    startupKitCount: startupKitItems.length,
+    checklistCount: checklistItems.length,
+    propertyRecordCount: propertyRecordBlocks.length,
+    propertyShellCount: propertyRecordBlocks.length,
+    counterCardReady: counterCard.ready,
+  };
+}

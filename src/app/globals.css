@@ -878,3 +878,39 @@ code.inline {
 .form-field select option[disabled] {
   color: var(--muted);
 }
+.save-status {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+}
+
+.output-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.output-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.output-card strong {
+  color: #ffffff;
+}
+
+@media (max-width: 720px) {
+  .output-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -1,32 +1,55 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { startupOutputs } from "../../../../lib/questionnaire-v1";
+import { useMemo } from "react";
+import { loadQuestionnaireStateV1 } from "../../../../lib/questionnaire-state-v1";
+import { buildFieldInstallChecklist } from "../../../../lib/output-mappers-v1";
 
-export default function PropertyRecordShellPage() {
+export default function FieldInstallChecklistPage() {
+  const state = useMemo(() => loadQuestionnaireStateV1(), []);
+  const items = useMemo(() => buildFieldInstallChecklist(state), [state]);
+
   return (
     <main>
       <section className="hero">
         <div className="subpage-logo-wrap">
-          <Image src="/iqr-home-logo-tight-WonB.png" alt="IQR Home" width={140} height={98} className="subpage-logo" priority />
+          <Image
+            src="/iqr-home-logo-tight-WonB.png"
+            alt="IQR Home"
+            width={140}
+            height={98}
+            className="subpage-logo"
+            priority
+          />
         </div>
-        <h1>Property Record Shell</h1>
-        <p>Initial structured object buckets created before field install and baseline documentation are completed.</p>
+
+        <h1>Field Install Checklist</h1>
+        <p>Partner-facing install tasks generated directly from the questionnaire state.</p>
+
         <div className="subpage-nav">
-          <Link href="/partner/outputs" className="subpage-nav-home">Back to Outputs</Link>
+          <Link href="/" className="subpage-nav-home">Back to Home</Link>
+
+          <div className="subpage-nav-links">
+            <Link href="/partner/questionnaire" className="subnav-pill">Questionnaire</Link>
+            <Link href="/partner/outputs" className="subnav-pill">Outputs</Link>
+          </div>
         </div>
       </section>
 
       <section className="section-card">
         <div className="section-header">
-          <div><h2>Shell Objects v1</h2><p className="muted">The record belongs to the house, not the current homeowner.</p></div>
-          <div className="status-pill">Record Shell</div>
+          <div>
+            <h2>Generated Install Tasks</h2>
+            <p className="muted">First-pass field checklist based on the saved questionnaire draft.</p>
+          </div>
         </div>
 
-        <div className="output-card-grid">
-          {startupOutputs.propertyRecordShell.map((item) => (
-            <div className="output-card static-card" key={item}>
-              <strong>{item}</strong>
-              <span>Created as part of startup output generation.</span>
+        <div className="bullet-list">
+          {items.map((item, index) => (
+            <div className="list-card" key={`${item.title}-${index}`}>
+              <strong>{item.title}</strong>
+              <div>{item.detail}</div>
             </div>
           ))}
         </div>

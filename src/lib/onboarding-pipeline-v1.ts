@@ -1,3 +1,6 @@
+import { buildOutputSummary, buildTagItems } from "./output-mappers-v1";
+import type { QuestionnaireStateV1 } from "./questionnaire-state-v1";
+
 export const onboardingStatuses = [
   "New",
   "In Process",
@@ -14,7 +17,14 @@ export const onboardingFlow = [
   "Startup Outputs",
   "Property Record Shell",
   "Field Install Plan",
-];
+] as const;
+
+export type OnboardingStatusEntry = {
+  status: OnboardingStatus;
+  timestamp: string;
+  changedBy: string;
+  notes: string;
+};
 
 export type OnboardingProperty = {
   id: string;
@@ -27,111 +37,166 @@ export type OnboardingProperty = {
   nextAction: string;
   notes: string;
   startupOutputs: string[];
-  statusHistory: {
-    status: OnboardingStatus;
-    timestamp: string;
-    changedBy: string;
-    notes: string;
-  }[];
+  statusHistory: OnboardingStatusEntry[];
 };
 
-export const onboardingProperties: OnboardingProperty[] = [
-  {
-    id: "IQR-AZ-001",
-    propertyName: "Desert Highlands Residence",
-    streetAddress: "1234 Desert Highlands Drive, Scottsdale, AZ 85255",
-    parcelApn: "217-54-321",
-    partnerName: "Desert Valley Integration",
-    continuityOwner: "TIS owner + property manager",
-    currentStatus: "In Process",
-    nextAction: "Confirm rack baseline and YoLink shutoff scope.",
-    notes: "Questionnaire captured. Outputs under review before startup kit assembly.",
-    startupOutputs: [
-      "QR tag plan",
-      "Counter Card config",
-      "Startup kit list",
-      "Property record shell",
-      "Field install checklist",
-    ],
-    statusHistory: [
-      {
-        status: "New",
-        timestamp: "2026-03-18 09:10",
-        changedBy: "Partner Sales",
-        notes: "Questionnaire started from partner workspace.",
-      },
-      {
-        status: "In Process",
-        timestamp: "2026-03-18 14:40",
-        changedBy: "IQR HQ",
-        notes: "Reviewing AV / IT rack scope and monitoring points.",
-      },
-    ],
-  },
-  {
-    id: "IQR-AZ-002",
-    propertyName: "North Peak Retreat",
-    streetAddress: "88 Summit Wash Trail, Scottsdale, AZ 85262",
-    parcelApn: "216-19-884",
-    partnerName: "Canyon Home Systems",
-    continuityOwner: "Project manager",
-    currentStatus: "Needs Additional Information",
-    nextAction: "Need APN confirmation and final people / roles contacts.",
-    notes: "Water-risk scope selected, but property anchor is incomplete.",
-    startupOutputs: [
-      "QR tag plan",
-      "Property record shell",
-    ],
-    statusHistory: [
-      {
-        status: "New",
-        timestamp: "2026-03-17 11:20",
-        changedBy: "Partner Sales",
-        notes: "Draft saved during intake call.",
-      },
-      {
-        status: "Needs Additional Information",
-        timestamp: "2026-03-18 10:05",
-        changedBy: "IQR HQ",
-        notes: "Missing parcel/APN and owner continuity contact.",
-      },
-    ],
-  },
-  {
-    id: "IQR-AZ-003",
-    propertyName: "Silverleaf Guest House",
-    streetAddress: "17 Copper Sky Court, Scottsdale, AZ 85255",
-    parcelApn: "216-72-041",
-    partnerName: "Sonoran Estate Tech",
-    continuityOwner: "Field technician",
-    currentStatus: "Ready to Ship",
-    nextAction: "Assemble startup kit and release install packet.",
-    notes: "Configurator outputs approved. Startup kit can be packed now.",
-    startupOutputs: [
-      "QR tag plan",
-      "Counter Card config",
-      "Startup kit list",
-      "Field install checklist",
-    ],
-    statusHistory: [
-      {
-        status: "New",
-        timestamp: "2026-03-15 08:15",
-        changedBy: "Partner Sales",
-        notes: "Initial questionnaire submitted.",
-      },
-      {
-        status: "In Process",
-        timestamp: "2026-03-15 13:45",
-        changedBy: "IQR HQ",
-        notes: "Outputs reviewed and property shell assembled.",
-      },
-      {
-        status: "Ready to Ship",
-        timestamp: "2026-03-18 16:10",
-        changedBy: "IQR HQ",
-        notes: "Install packet approved and startup kit released.",
-      },
-      ],
-   },
-];
+function text(value: string | undefined, fallback = ""): string {
+  return value && value.trim() ? value.trim() : fallback;
+}
+
+function derivePropertyName(state: QuestionnaireStateV1): string {
+  const street = text(state.propertyBasics.streetAddress);
+  const parcel = text(state.propertyBasics.parcelApn);
+
+  if (street) {
+    return street.split(",")[0].trim();
+  }
+
+  if (parcel) {
+    return `Property ${parcel}`;
+  }
+
+  return "Unnamed property draft";
+}
+
+function derivePropertyId(state: QuestionnaireStateV1): string {
+  const parcel = text(state.propertyBasics.parcelApn);
+  if (parcel) {
+    return `IQR-${parcel.replace(/[^0-9A-Za-z]/g, "").slice(0, 12)}`;
+  }
+
+  const street = text(state.propertyBasics.streetAddress);
+  if (street) {
+    return `IQR-${street.replace(/[^0-9A-Za-z]/g, "").slice(0, 12)}`;
+  }
+
+  return "IQR-DRAFT";
+}
+
+function deriveStatus(
+  state: QuestionnaireStateV1,
+  qrPlanCount: number,
+  outputSummary: ReturnType<typeof buildOutputSummary>,
+): OnboardingStatus {
+  const hasParcel = Boolean(text(state.propertyBasics.parcelApn));
+  const hasStreet = Boolean(text(state.propertyBasics.streetAddress));
+  const hasOwner = Boolean(text(state.peopleRoles.clientOwner));
+  const hasPartner = Boolean(text(state.peopleRoles.tisOwner));
+
+  if (!hasParcel || !hasStreet) {
+    return "Needs Additional Information";
+  }
+
+  if (!hasOwner || !hasPartner) {
+    return "Needs Additional Information";
+  }
+
+  const hasOutputs =
+    qrPlanCount > 0 ||
+    outputSummary.startupKitCount > 0 ||
+    outputSummary.checklistCount > 0 ||
+    outputSummary.propertyShellCount > 0;
+
+  if (!hasOutputs) {
+    return "In Process";
+  }
+
+  return "Ready to Ship";
+}
+
+function deriveNextAction(currentStatus: OnboardingStatus): string {
+  if (currentStatus === "Needs Additional Information") {
+    return "Complete the property anchor and core ownership / partner fields.";
+  }
+
+  if (currentStatus === "In Process") {
+    return "Finish the questionnaire so startup outputs can be assembled.";
+  }
+
+  if (currentStatus === "Ready to Ship") {
+    return "Review the generated outputs and release the startup packet.";
+  }
+
+  if (currentStatus === "Completed") {
+    return "Archive the handoff and wait for next field event.";
+  }
+
+  return "Open the questionnaire and begin intake.";
+}
+
+export function buildOnboardingProperty(
+  state: QuestionnaireStateV1,
+): OnboardingProperty {
+  const outputSummary = buildOutputSummary(state);
+  const qrPlanCount = buildTagItems(state).length;
+  const currentStatus = deriveStatus(state, qrPlanCount, outputSummary);
+  const now = new Date().toISOString();
+
+  const startupOutputs: string[] = [];
+  if (qrPlanCount > 0) startupOutputs.push("QR tag plan");
+  if (outputSummary.counterCardReady) startupOutputs.push("Counter Card config");
+  if (outputSummary.startupKitCount > 0) startupOutputs.push("Startup kit list");
+  if (outputSummary.propertyShellCount > 0) startupOutputs.push("Property record shell");
+  if (outputSummary.checklistCount > 0) startupOutputs.push("Field install checklist");
+
+  const notes =
+    currentStatus === "Ready to Ship"
+      ? "Questionnaire is aligned well enough to assemble and review the startup packet."
+      : currentStatus === "Needs Additional Information"
+      ? "Draft exists, but core identity or relationship fields are still incomplete."
+      : "Draft is active and outputs are still forming.";
+
+  const history: OnboardingStatusEntry[] = [
+    {
+      status: "New",
+      timestamp: now,
+      changedBy: "Partner workspace",
+      notes: "Questionnaire draft detected in the current browser.",
+    },
+  ];
+
+  if (currentStatus !== "New") {
+    history.push({
+      status: currentStatus,
+      timestamp: now,
+      changedBy: "Derived pipeline",
+      notes,
+    });
+  }
+
+  return {
+    id: derivePropertyId(state),
+    propertyName: derivePropertyName(state),
+    streetAddress: text(state.propertyBasics.streetAddress, "Street address not set"),
+    parcelApn: text(state.propertyBasics.parcelApn, "Parcel / APN not set"),
+    partnerName: text(state.peopleRoles.tisOwner, "Partner account owner not set"),
+    continuityOwner: text(
+      state.peopleRoles.propertyManager || state.peopleRoles.clientOwner,
+      "Continuity owner not assigned",
+    ),
+    currentStatus,
+    nextAction: deriveNextAction(currentStatus),
+    notes,
+    startupOutputs,
+    statusHistory: history,
+  };
+}
+
+export function buildOnboardingBuckets(state: QuestionnaireStateV1) {
+  const property = buildOnboardingProperty(state);
+
+  return onboardingStatuses.reduce<Record<OnboardingStatus, OnboardingProperty[]>>(
+    (accumulator, status) => {
+      accumulator[status] = property.currentStatus === status ? [property] : [];
+      return accumulator;
+    },
+    {
+      New: [],
+      "In Process": [],
+      "Needs Additional Information": [],
+      "Ready to Ship": [],
+      Completed: [],
+    },
+  );
+}
+

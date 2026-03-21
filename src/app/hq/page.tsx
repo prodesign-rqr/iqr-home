@@ -1,16 +1,35 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import {
-  onboardingFlow,
-  onboardingProperties,
+  loadQuestionnaireStateV1,
+  type QuestionnaireStateV1,
+} from "../../lib/questionnaire-state-v1";
+import {
+  buildOnboardingBuckets,
+  buildOnboardingProperty,
   onboardingStatuses,
 } from "../../lib/onboarding-pipeline-v1";
-
-function countByStatus(status: string) {
-  return onboardingProperties.filter((property) => property.currentStatus === status).length;
-}
+import { buildOutputSummary, buildTagItems } from "../../lib/output-mappers-v1";
 
 export default function HQPage() {
+  const [state, setState] = useState<QuestionnaireStateV1 | null>(null);
+
+  useEffect(() => {
+    setState(loadQuestionnaireStateV1());
+  }, []);
+
+  const currentState = state ?? loadQuestionnaireStateV1();
+  const onboardingProperty = useMemo(
+    () => buildOnboardingProperty(currentState),
+    [currentState],
+  );
+  const buckets = useMemo(() => buildOnboardingBuckets(currentState), [currentState]);
+  const outputSummary = useMemo(() => buildOutputSummary(currentState), [currentState]);
+  const qrPlanCount = useMemo(() => buildTagItems(currentState).length, [currentState]);
+
   return (
     <main>
       <section className="hero">
@@ -27,24 +46,26 @@ export default function HQPage() {
 
         <h1>HQ Admin</h1>
         <p>
-          IQR HQ oversight for onboarding review, status control, record correction,
-          and startup release decisions. This is the admin side of workflow support v1.
+          HQ-side oversight for onboarding review, status control, record correction, and startup
+          release decisions.
         </p>
 
         <div className="subpage-nav">
           <Link href="/" className="subpage-nav-home">
             Back to Home
           </Link>
+
           <div className="subpage-nav-links">
-            <Link href="/partner" className="subpage-nav-link">
+            <Link href="/partner" className="subnav-pill">
               Partner Entry
             </Link>
-            <Link href="/partner/questionnaire" className="subpage-nav-link">
-              Questionnaire v1
+            <Link href="/partner/questionnaire" className="subnav-pill">
+              Questionnaire
             </Link>
-            <Link href="/partner/outputs" className="subpage-nav-link">
-              Outputs
+            <Link href="/partner/outputs" className="subnav-pill">
+              Startup Outputs
             </Link>
+            <span className="subnav-pill current">HQ Admin</span>
           </div>
         </div>
       </section>
@@ -58,107 +79,100 @@ export default function HQPage() {
           <div className="status-pill">HQ Protected</div>
         </div>
 
-        <div className="summary-grid five-up">
+        <div className="pipeline-card-grid">
           {onboardingStatuses.map((status) => (
-            <div className="summary-card compact" key={status}>
-              <div className="status-pill">{status}</div>
-              <h3>{countByStatus(status)}</h3>
-              <p>{status} properties</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Workflow Control Rail</h2>
-            <p className="muted">The same flow, seen from HQ with review responsibility attached.</p>
-          </div>
-        </div>
-
-        <div className="workflow-rail">
-          {onboardingFlow.map((step, index) => (
-            <div className="workflow-step" key={step}>
-              <div className="workflow-index">{index + 1}</div>
-              <div>
-                <strong>{step}</strong>
-                <div className="muted small">HQ review stays attached to this stage.</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Property Onboarding Queue</h2>
-            <p className="muted">Mock queue for status history, next action control, and setup review.</p>
-          </div>
-        </div>
-
-        <div className="pipeline-board">
-          {onboardingProperties.map((property) => (
-            <div className="pipeline-card" key={property.id}>
+            <div className="pipeline-card" key={status}>
               <div className="pipeline-card-top">
-                <div>
-                  <h3>{property.propertyName}</h3>
-                  <p className="muted">{property.streetAddress}</p>
-                </div>
-                <div className="status-pill">{property.currentStatus}</div>
+                <strong>{status}</strong>
+                <span className="qty-chip">{buckets[status].length}</span>
               </div>
-
-              <div className="meta-grid">
-                <div>
-                  <strong>Property ID</strong>
-                  <div>{property.id}</div>
-                </div>
-                <div>
-                  <strong>Parcel/APN</strong>
-                  <div>{property.parcelApn}</div>
-                </div>
-                <div>
-                  <strong>Partner</strong>
-                  <div>{property.partnerName}</div>
-                </div>
-                <div>
-                  <strong>Continuity owner</strong>
-                  <div>{property.continuityOwner}</div>
-                </div>
-              </div>
-
-              <p>
-                <strong>Next action:</strong> {property.nextAction}
-              </p>
-              <p className="muted">{property.notes}</p>
-
-              <div className="badge-row">
-                {property.startupOutputs.map((item) => (
-                  <span className="mini-badge" key={item}>
-                    {item}
-                  </span>
-                ))}
-              </div>
-
-              <div className="history-table">
-                <div className="history-row history-head">
-                  <div>Status</div>
-                  <div>Timestamp</div>
-                  <div>Changed by</div>
-                  <div>Notes</div>
-                </div>
-                {property.statusHistory.map((entry, index) => (
-                  <div className="history-row" key={`${property.id}-${index}`}>
-                    <div>{entry.status}</div>
-                    <div>{entry.timestamp}</div>
-                    <div>{entry.changedBy}</div>
-                    <div>{entry.notes}</div>
-                  </div>
-                ))}
+              <div className="muted">
+                {buckets[status].length > 0
+                  ? buckets[status][0].propertyName
+                  : "No draft in this bucket"}
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h2>Current Draft Record</h2>
+            <p className="muted">
+              HQ view of the current browser questionnaire and its derived startup posture.
+            </p>
+          </div>
+          <div className="status-pill">{onboardingProperty.currentStatus}</div>
+        </div>
+
+        <div className="output-detail-stack">
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>{onboardingProperty.propertyName}</strong>
+              <span className="qty-chip">{onboardingProperty.id}</span>
+            </div>
+            <p>
+              <strong>Street address:</strong> {onboardingProperty.streetAddress}
+            </p>
+            <p>
+              <strong>Parcel / APN:</strong> {onboardingProperty.parcelApn}
+            </p>
+            <p>
+              <strong>Partner:</strong> {onboardingProperty.partnerName}
+            </p>
+            <p>
+              <strong>Continuity owner:</strong> {onboardingProperty.continuityOwner}
+            </p>
+            <p>
+              <strong>Next action:</strong> {onboardingProperty.nextAction}
+            </p>
+            <p>
+              <strong>Notes:</strong> {onboardingProperty.notes}
+            </p>
+          </div>
+
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>Startup Output Counts</strong>
+              <span className="qty-chip">Live</span>
+            </div>
+            <p>
+              <strong>QR plan items:</strong> {qrPlanCount}
+            </p>
+            <p>
+              <strong>Startup kit items:</strong> {outputSummary.startupKitCount}
+            </p>
+            <p>
+              <strong>Record shell blocks:</strong> {outputSummary.propertyShellCount}
+            </p>
+            <p>
+              <strong>Field tasks:</strong> {outputSummary.checklistCount}
+            </p>
+            <p>
+              <strong>Counter Card ready:</strong>{" "}
+              {outputSummary.counterCardReady ? "Yes" : "No"}
+            </p>
+          </div>
+
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>Status History</strong>
+              <span className="qty-chip">{onboardingProperty.statusHistory.length}</span>
+            </div>
+
+            <div className="bullet-list">
+              {onboardingProperty.statusHistory.map((entry, index) => (
+                <div className="list-card" key={`${entry.status}-${index}`}>
+                  <strong>{entry.status}</strong>
+                  <div>{entry.timestamp}</div>
+                  <div>{entry.changedBy}</div>
+                  <div>{entry.notes}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     </main>

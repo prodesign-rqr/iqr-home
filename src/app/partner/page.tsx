@@ -1,29 +1,32 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { onboardingFlow } from "../../lib/onboarding-pipeline-v1";
-
-const modules = [
-  {
-    title: "Design Sales Questionnaire v1",
-    href: "/partner/questionnaire",
-    status: "Active",
-    body: "Structured intake for property basics, AV / IT, monitoring, and service preferences.",
-  },
-  {
-    title: "Configurator Outputs v1",
-    href: "/partner/outputs",
-    status: "Active",
-    body: "Review QR tags, counter card, startup kit, property shell, and field install checklist.",
-  },
-  {
-    title: "HQ Admin Pipeline",
-    href: "/hq",
-    status: "Review",
-    body: "Shared visibility into onboarding status, handoff history, and next action owners.",
-  },
-];
+import { useEffect, useMemo, useState } from "react";
+import {
+  hasSavedQuestionnaireDraft,
+  loadQuestionnaireStateV1,
+  type QuestionnaireStateV1,
+} from "../../lib/questionnaire-state-v1";
+import { buildOutputSummary, buildTagItems } from "../../lib/output-mappers-v1";
+import { buildOnboardingProperty } from "../../lib/onboarding-pipeline-v1";
 
 export default function PartnerPage() {
+  const [state, setState] = useState<QuestionnaireStateV1 | null>(null);
+
+  useEffect(() => {
+    setState(loadQuestionnaireStateV1());
+  }, []);
+
+  const draftLoaded = state !== null;
+  const currentState = state ?? loadQuestionnaireStateV1();
+  const outputSummary = useMemo(() => buildOutputSummary(currentState), [currentState]);
+  const qrPlanCount = useMemo(() => buildTagItems(currentState).length, [currentState]);
+  const onboardingRecord = useMemo(
+    () => buildOnboardingProperty(currentState),
+    [currentState],
+  );
+
   return (
     <main>
       <section className="hero">
@@ -40,23 +43,23 @@ export default function PartnerPage() {
 
         <h1>Partner Entry</h1>
         <p>
-          Partner-protected workspace for TIS owners, salespeople, project managers,
-          and field technicians. This is where Questionnaire v1, the configurator,
-          startup outputs, and property setup flow live.
+          Partner-side workspace for intake, output review, and startup packet readiness.
         </p>
 
         <div className="subpage-nav">
           <Link href="/" className="subpage-nav-home">
             Back to Home
           </Link>
+
           <div className="subpage-nav-links">
-            <Link href="/partner/questionnaire" className="subpage-nav-link is-active">
-              Questionnaire v1
+            <span className="subnav-pill current">Partner Workspace</span>
+            <Link href="/partner/questionnaire" className="subnav-pill">
+              Questionnaire
             </Link>
-            <Link href="/partner/outputs" className="subpage-nav-link">
-              Outputs
+            <Link href="/partner/outputs" className="subnav-pill">
+              Startup Outputs
             </Link>
-            <Link href="/hq" className="subpage-nav-link">
+            <Link href="/hq" className="subnav-pill">
               HQ Admin
             </Link>
           </div>
@@ -66,84 +69,108 @@ export default function PartnerPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Required Platform Flow</h2>
-            <p className="muted">Partner workflow support v1 inside the current app.</p>
+            <h2>Draft Status</h2>
+            <p className="muted">
+              Current browser draft state and the readiness implied by the live questionnaire.
+            </p>
           </div>
-          <div className="status-pill">Partner Protected</div>
+          <div className="status-pill">
+            {hasSavedQuestionnaireDraft(currentState) ? "Saved draft present" : "No saved draft"}
+          </div>
         </div>
 
-        <div className="workflow-rail">
-          {onboardingFlow.map((step, index) => (
-            <div className="workflow-step" key={step}>
-              <div className="workflow-index">{index + 1}</div>
-              <div>
-                <strong>{step}</strong>
-              </div>
-            </div>
-          ))}
+        <div className="grid two-col">
+          <div className="metric-card">
+            <div className="metric-label">Property</div>
+            <div className="metric-value">{onboardingRecord.propertyName}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Current status</div>
+            <div className="metric-value">{onboardingRecord.currentStatus}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">QR plan items</div>
+            <div className="metric-value">{qrPlanCount}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Startup kit items</div>
+            <div className="metric-value">{outputSummary.startupKitCount}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Record shell blocks</div>
+            <div className="metric-value">{outputSummary.propertyShellCount}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Field tasks</div>
+            <div className="metric-value">{outputSummary.checklistCount}</div>
+          </div>
         </div>
+
+        <div className="list-card">
+          <strong>Next action</strong>
+          <div>{onboardingRecord.nextAction}</div>
+        </div>
+
+        <p className="muted">
+          {draftLoaded
+            ? "Loaded from the current browser draft."
+            : "Loading the current browser draft."}
+        </p>
       </section>
 
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Active Modules</h2>
-            <p className="muted">Use these as the working doors into the intake and setup flow.</p>
+            <h2>Partner Actions</h2>
+            <p className="muted">
+              Move from intake to generated outputs without leaving the partner lane.
+            </p>
           </div>
         </div>
 
-        <div className="summary-grid">
-          {modules.map((module) => (
-            <div className="summary-card" key={module.title}>
-              <div className="status-pill">{module.status}</div>
-              <h3>{module.title}</h3>
-              <p>{module.body}</p>
-              <Link href={module.href} className="button-secondary inline-button">
-                Open module
-              </Link>
+        <div className="output-detail-stack">
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>Questionnaire</strong>
+              <span className="qty-chip">Intake</span>
             </div>
-          ))}
-        </div>
-      </section>
+            <p>
+              Capture the property anchor, people, AV / IT scope, monitoring, and access posture.
+            </p>
+            <Link href="/partner/questionnaire" className="button-primary inline-button">
+              Open Questionnaire
+            </Link>
+          </div>
 
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Role Coverage</h2>
-            <p className="muted">Partner entry stays focused on structured intake and startup preparation.</p>
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>Startup Outputs</strong>
+              <span className="qty-chip">Review</span>
+            </div>
+            <p>
+              Inspect QR tags, startup kit contents, property shell blocks, and field tasks.
+            </p>
+            <Link href="/partner/outputs" className="button-primary inline-button">
+              Open Startup Outputs
+            </Link>
           </div>
-        </div>
 
-        <div className="spec-table">
-          <div className="spec-table-head four-col">
-            <div>Role</div>
-            <div>Primary use</div>
-            <div>What they touch</div>
-            <div>Outcome</div>
-          </div>
-          <div className="spec-table-row four-col">
-            <div>TIS Owner</div>
-            <div>Commercial decision + scope control</div>
-            <div>Questionnaire, outputs, HQ review</div>
-            <div>Approves startup package</div>
-          </div>
-          <div className="spec-table-row four-col">
-            <div>Salesperson</div>
-            <div>Initial intake</div>
-            <div>Property basics, people / roles, service preferences</div>
-            <div>Creates structured starting record</div>
-          </div>
-          <div className="spec-table-row four-col">
-            <div>Project Manager</div>
-            <div>Workflow coordination</div>
-            <div>Outputs review, startup kit, install plan</div>
-            <div>Moves property toward ship / install</div>
-          </div>
-          <div className="spec-table-row four-col">
-            <div>Field Technician</div>
-            <div>Install execution</div>
-            <div>Checklist, labels, property shell confirmation</div>
-            <div>Builds the house memory in the field</div>
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>HQ Visibility</strong>
+              <span className="qty-chip">Oversight</span>
+            </div>
+            <p>
+              Confirm how the current draft appears on the HQ side of the onboarding workflow.
+            </p>
+            <Link href="/hq" className="button-secondary inline-button">
+              Open HQ Admin
+            </Link>
           </div>
         </div>
       </section>

@@ -1,70 +1,65 @@
-export type QuestionnaireStateV1 = {
-  _meta: {
-    lastSavedAt: string | null;
-  };
-  propertyBasics: {
-    parcelApn: string;
-    streetAddress: string;
-    propertyType: string;
-    occupancyType: string;
-  };
-  peopleRoles: {
-    clientOwner: string;
-    propertyManager: string;
-    tisOwner: string;
-    servicePreference: string;
-  };
-  avit: {
-    mainRackPresent: boolean;
-    managedGateway: boolean;
-    poeSwitching: boolean;
-    wifiAccessPoints: boolean;
-    controlProcessor: boolean;
-    upsConditionedPower: boolean;
-    rackLocation: string;
-    networkNotes: string;
-  };
-  majorSystems: {
-    hvac: boolean;
-    waterHeater: boolean;
-    electrical: boolean;
-    plumbing: boolean;
-    roof: boolean;
-    refrigerationIceMaker: boolean;
-  };
-  waterRisk: {
-    dishwasherProtected: boolean;
-    toiletsProtected: boolean;
-    clothesWasherProtected: boolean;
-    refrigeratorProtected: boolean;
-    waterHeaterProtected: boolean;
-    sinkCabinetProtected: boolean;
-    localShutoffScope: boolean;
-  };
-  environmental: {
-    rackTemperature: boolean;
-    garageFreezer: boolean;
-    wineRoom: boolean;
-    artCollectionRoom: boolean;
-    mechanicalRoom: boolean;
-    pantryFoodStorage: boolean;
-  };
-  counterCard: {
-    mode: string;
-    guestNetworkName: string;
-  };
-  stewardship: {
-    yearlyUpdate: string;
-    startupPriority: string;
-    onboardingNotes: string;
-  };
+export type QuestionnaireMeta = {
+  lastSavedAt: string;
 };
-
-export const QUESTIONNAIRE_V1_STORAGE_KEY = "iqr-questionnaire-v1";
-
+ 
+export type PropertyBasicsState = {
+  parcelApn: string;
+  streetAddress: string;
+  propertyType: string;
+  occupancyType: string;
+};
+ 
+export type PeopleRolesState = {
+  clientOwner: string;
+  propertyManager: string;
+  tisOwner: string;
+  servicePreference: string;
+};
+ 
+export type AvitState = {
+  mainRackPresent: boolean;
+  managedGateway: boolean;
+  poeSwitching: boolean;
+  wifiAccessPoints: boolean;
+  controlProcessor: boolean;
+  upsConditionedPower: boolean;
+  rackLocation: string;
+  networkNotes: string;
+};
+ 
+export type MajorSystemsState = {
+  hvac: boolean;
+  waterHeater: boolean;
+  electrical: boolean;
+  plumbing: boolean;
+  roof: boolean;
+  refrigerationIceMaker: boolean;
+};
+ 
+export type WaterRiskState = {
+  dishwasherProtected: boolean;
+  toiletsProtected: boolean;
+  clothesWasherProtected: boolean;
+  refrigeratorProtected: boolean;
+  waterHeaterPanProtected: boolean;
+  sinkCabinetProtected: boolean;
+  localShutoffInScope: boolean;
+};
+ 
+export type QuestionnaireStateV1 = {
+  _meta: QuestionnaireMeta;
+  propertyBasics: PropertyBasicsState;
+  peopleRoles: PeopleRolesState;
+  avit: AvitState;
+  majorSystems: MajorSystemsState;
+  waterRisk: WaterRiskState;
+};
+ 
+const STORAGE_KEY = "iqr-questionnaire-state-v1";
+ 
 export const defaultQuestionnaireStateV1: QuestionnaireStateV1 = {
   _meta: {
-    lastSavedAt: null,
+    lastSavedAt: "",
   },
   propertyBasics: {
     parcelApn: "",
@@ -101,118 +96,93 @@ export const defaultQuestionnaireStateV1: QuestionnaireStateV1 = {
     toiletsProtected: false,
     clothesWasherProtected: false,
     refrigeratorProtected: false,
-    waterHeaterProtected: false,
+    waterHeaterPanProtected: false,
     sinkCabinetProtected: false,
-    localShutoffScope: false,
-  },
-  environmental: {
-    rackTemperature: false,
-    garageFreezer: false,
-    wineRoom: false,
-    artCollectionRoom: false,
-    mechanicalRoom: false,
-    pantryFoodStorage: false,
-  },
-  counterCard: {
-    mode: "",
-    guestNetworkName: "",
-  },
-  stewardship: {
-    yearlyUpdate: "",
-    startupPriority: "",
-    onboardingNotes: "",
+    localShutoffInScope: false,
   },
 };
-
-function cloneDefaultState(): QuestionnaireStateV1 {
-  return JSON.parse(JSON.stringify(defaultQuestionnaireStateV1));
-}
-
-export function mergeQuestionnaireStateV1(
-  source: Partial<QuestionnaireStateV1> | null | undefined
+ 
+function mergeState(
+  base: QuestionnaireStateV1,
+  incoming: Partial<QuestionnaireStateV1> | null | undefined
 ): QuestionnaireStateV1 {
-  const base = cloneDefaultState();
-
-  if (!source) return base;
-
+  const next = incoming ?? {};
+ 
   return {
-    ...base,
-    ...source,
     _meta: {
       ...base._meta,
-      ...(source._meta ?? {}),
+      ...(next._meta ?? {}),
     },
     propertyBasics: {
       ...base.propertyBasics,
-      ...(source.propertyBasics ?? {}),
+      ...(next.propertyBasics ?? {}),
     },
     peopleRoles: {
       ...base.peopleRoles,
-      ...(source.peopleRoles ?? {}),
+      ...(next.peopleRoles ?? {}),
     },
     avit: {
       ...base.avit,
-      ...(source.avit ?? {}),
+      ...(next.avit ?? {}),
     },
     majorSystems: {
       ...base.majorSystems,
-      ...(source.majorSystems ?? {}),
+      ...(next.majorSystems ?? {}),
     },
     waterRisk: {
       ...base.waterRisk,
-      ...(source.waterRisk ?? {}),
-    },
-    environmental: {
-      ...base.environmental,
-      ...(source.environmental ?? {}),
-    },
-    counterCard: {
-      ...base.counterCard,
-      ...(source.counterCard ?? {}),
-    },
-    stewardship: {
-      ...base.stewardship,
-      ...(source.stewardship ?? {}),
+      ...(next.waterRisk ?? {}),
     },
   };
 }
-
+ 
 export function loadQuestionnaireStateV1(): QuestionnaireStateV1 {
-  if (typeof window === "undefined") return cloneDefaultState();
-
-  const raw = window.localStorage.getItem(QUESTIONNAIRE_V1_STORAGE_KEY);
-  if (!raw) return cloneDefaultState();
-
+  if (typeof window === "undefined") {
+    return defaultQuestionnaireStateV1;
+  }
+ 
   try {
-    return mergeQuestionnaireStateV1(JSON.parse(raw));
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+ 
+    if (!raw) {
+      return defaultQuestionnaireStateV1;
+    }
+ 
+    return mergeState(
+      defaultQuestionnaireStateV1,
+      JSON.parse(raw) as Partial<QuestionnaireStateV1>
+    );
   } catch {
-    return cloneDefaultState();
+    return defaultQuestionnaireStateV1;
   }
 }
-
-export function saveQuestionnaireStateV1(state: QuestionnaireStateV1): QuestionnaireStateV1 {
-  const nextState: QuestionnaireStateV1 = {
+ 
+export function saveQuestionnaireStateV1(
+  state: QuestionnaireStateV1
+): QuestionnaireStateV1 {
+  const savedState: QuestionnaireStateV1 = {
     ...state,
     _meta: {
       ...state._meta,
       lastSavedAt: new Date().toISOString(),
     },
   };
-
+ 
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(QUESTIONNAIRE_V1_STORAGE_KEY, JSON.stringify(nextState));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(savedState));
   }
-
-  return nextState;
+ 
+  return savedState;
 }
-
-export function clearQuestionnaireStateV1() {
+ 
+export function clearQuestionnaireStateV1(): void {
   if (typeof window !== "undefined") {
-    window.localStorage.removeItem(QUESTIONNAIRE_V1_STORAGE_KEY);
+    window.localStorage.removeItem(STORAGE_KEY);
   }
 }
-
-export function hasSavedQuestionnaireDraft(state: QuestionnaireStateV1) {
+ 
+export function hasSavedQuestionnaireDraft(
+  state: QuestionnaireStateV1
+): boolean {
   return Boolean(state._meta.lastSavedAt);
 }
-

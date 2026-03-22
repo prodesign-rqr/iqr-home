@@ -13,6 +13,7 @@ import {
   onboardingStatuses,
 } from "../../lib/onboarding-pipeline-v1";
 import { buildOutputSummary, buildTagItems } from "../../lib/output-mappers-v1";
+import { buildPropertyWorkspace } from "../../lib/property-workspace-v1";
 
 export default function HQPage() {
   const [state, setState] = useState<QuestionnaireStateV1 | null>(null);
@@ -29,6 +30,7 @@ export default function HQPage() {
   const buckets = useMemo(() => buildOnboardingBuckets(currentState), [currentState]);
   const outputSummary = useMemo(() => buildOutputSummary(currentState), [currentState]);
   const qrPlanCount = useMemo(() => buildTagItems(currentState).length, [currentState]);
+  const workspace = useMemo(() => buildPropertyWorkspace(currentState), [currentState]);
 
   return (
     <main>
@@ -46,8 +48,8 @@ export default function HQPage() {
 
         <h1>HQ Admin</h1>
         <p>
-          HQ-side oversight for onboarding review, status control, record correction, and startup
-          release decisions.
+          HQ-side oversight for onboarding review, status control, record correction, startup release decisions,
+          and property workspace continuity.
         </p>
 
         <div className="subpage-nav">
@@ -58,6 +60,9 @@ export default function HQPage() {
           <div className="subpage-nav-links">
             <Link href="/partner" className="subnav-pill">
               Partner Entry
+            </Link>
+            <Link href="/partner/workspace" className="subnav-pill">
+              Property Workspace
             </Link>
             <Link href="/partner/questionnaire" className="subnav-pill">
               Questionnaire
@@ -94,6 +99,46 @@ export default function HQPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h2>Property Workspace Oversight</h2>
+            <p className="muted">
+              First HQ view into the property-centered operating environment.
+            </p>
+          </div>
+          <div className="status-pill">{workspace.currentStatus}</div>
+        </div>
+
+        <div className="grid two-col">
+          <div className="metric-card">
+            <div className="metric-label">Participants</div>
+            <div className="metric-value">{workspace.participants.length}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Action prompts</div>
+            <div className="metric-value">{workspace.prompts.length}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Modules</div>
+            <div className="metric-value">{workspace.modules.length}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Counter Card</div>
+            <div className="metric-value">
+              {workspace.counterCardReady ? "Ready" : "Needs attention"}
+            </div>
+          </div>
+        </div>
+
+        <Link href="/partner/workspace" className="button-primary inline-button">
+          Open Property Workspace
+        </Link>
       </section>
 
       <section className="section-card">

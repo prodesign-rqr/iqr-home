@@ -10,6 +10,7 @@ import {
 } from "../../lib/questionnaire-state-v1";
 import { buildOutputSummary, buildTagItems } from "../../lib/output-mappers-v1";
 import { buildOnboardingProperty } from "../../lib/onboarding-pipeline-v1";
+import { buildPropertyWorkspace } from "../../lib/property-workspace-v1";
 
 export default function PartnerPage() {
   const [state, setState] = useState<QuestionnaireStateV1 | null>(null);
@@ -26,6 +27,7 @@ export default function PartnerPage() {
     () => buildOnboardingProperty(currentState),
     [currentState],
   );
+  const workspace = useMemo(() => buildPropertyWorkspace(currentState), [currentState]);
 
   return (
     <main>
@@ -43,7 +45,8 @@ export default function PartnerPage() {
 
         <h1>Partner Entry</h1>
         <p>
-          Partner-side workspace for intake, output review, and startup packet readiness.
+          Partner-side workspace for intake, output review, startup packet readiness, and the first
+          property operations view.
         </p>
 
         <div className="subpage-nav">
@@ -53,6 +56,9 @@ export default function PartnerPage() {
 
           <div className="subpage-nav-links">
             <span className="subnav-pill current">Partner Workspace</span>
+            <Link href="/partner/workspace" className="subnav-pill">
+              Property Workspace
+            </Link>
             <Link href="/partner/questionnaire" className="subnav-pill">
               Questionnaire
             </Link>
@@ -126,9 +132,49 @@ export default function PartnerPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
+            <h2>Property Workspace Snapshot</h2>
+            <p className="muted">
+              First architecture pass for the property-centered operations portal.
+            </p>
+          </div>
+          <div className="status-pill">{workspace.currentStatus}</div>
+        </div>
+
+        <div className="grid two-col">
+          <div className="metric-card">
+            <div className="metric-label">Participants</div>
+            <div className="metric-value">{workspace.participants.length}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Action prompts</div>
+            <div className="metric-value">{workspace.prompts.length}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Modules</div>
+            <div className="metric-value">{workspace.modules.length}</div>
+          </div>
+
+          <div className="metric-card">
+            <div className="metric-label">Counter Card</div>
+            <div className="metric-value">
+              {workspace.counterCardReady ? "Ready" : "Needs attention"}
+            </div>
+          </div>
+        </div>
+
+        <Link href="/partner/workspace" className="button-primary inline-button">
+          Open Property Workspace
+        </Link>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
             <h2>Partner Actions</h2>
             <p className="muted">
-              Move from intake to generated outputs without leaving the partner lane.
+              Move from intake to property workspace, generated outputs, and HQ visibility without leaving the partner lane.
             </p>
           </div>
         </div>
@@ -144,6 +190,19 @@ export default function PartnerPage() {
             </p>
             <Link href="/partner/questionnaire" className="button-primary inline-button">
               Open Questionnaire
+            </Link>
+          </div>
+
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>Property Workspace</strong>
+              <span className="qty-chip">Operations</span>
+            </div>
+            <p>
+              View the property anchor, participants, prompts, lifecycle posture, and architectural operating modules.
+            </p>
+            <Link href="/partner/workspace" className="button-primary inline-button">
+              Open Property Workspace
             </Link>
           </div>
 

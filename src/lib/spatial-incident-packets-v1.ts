@@ -61,19 +61,54 @@ export type SpatialIncidentObjectV1 = {
   actionSummary: string;
 };
 
+export type IncidentColorRoleV1 = "red" | "yellow" | "green" | "blue" | "gray";
+
+export type IncidentColorLogicV1 = {
+  red: string;
+  yellow: string;
+  green: string;
+  blue: string;
+  gray: string;
+};
+
+export type FloorPlanOverlayZoneV1 = {
+  zoneId: string;
+  floorLabel: string;
+  roomOrZone: string;
+  displayLabel: string;
+  colorRole: IncidentColorRoleV1;
+  coordinateHint: string;
+  rationale: string;
+};
+
+export type IncidentPacketLegendItemV1 = {
+  colorRole: IncidentColorRoleV1;
+  label: string;
+  meaning: string;
+};
+
+export type IncidentPacketLayoutSectionV1 = {
+  title: string;
+  purpose: string;
+  includedContent: string[];
+};
+
 export type SpatialIncidentPacketShellV1 = {
   packetTitle: string;
   packetStatus: string;
-  colorLogic: {
-    red: string;
-    yellow: string;
-    green: string;
-    blue: string;
-    gray: string;
-  };
+  colorLogic: IncidentColorLogicV1;
   includedArtifacts: string[];
   returnPath: string;
   archivePolicy: string;
+};
+
+export type SpatialIncidentRenderModelV1 = {
+  packetTitle: string;
+  overlayZones: FloorPlanOverlayZoneV1[];
+  legend: IncidentPacketLegendItemV1[];
+  layoutSections: IncidentPacketLayoutSectionV1[];
+  renderRules: string[];
+  packetReadyState: string;
 };
 
 export type SpatialIncidentTelemetryModelV1 = {
@@ -88,6 +123,7 @@ export type SpatialIncidentTelemetryModelV1 = {
   recipients: TelemetryRecipientV1[];
   sampleIncident: SpatialIncidentObjectV1;
   samplePacket: SpatialIncidentPacketShellV1;
+  renderModel: SpatialIncidentRenderModelV1;
   returnPaths: {
     workspace: string;
     outputs: string;
@@ -291,17 +327,21 @@ function buildSampleIncident(
   };
 }
 
+function buildColorLogic(): IncidentColorLogicV1 {
+  return {
+    red: "Active / urgent / directly affected",
+    yellow: "Attention / degraded / nearby concern",
+    green: "Protected / verified / normal where relevant",
+    blue: "Monitored point / device location / reference marker",
+    gray: "Background structure / unaffected context",
+  };
+}
+
 function buildSamplePacket(): SpatialIncidentPacketShellV1 {
   return {
     packetTitle: "Spatial Incident Packet",
     packetStatus: "Packet shell ready",
-    colorLogic: {
-      red: "Active / urgent / directly affected",
-      yellow: "Attention / degraded / nearby concern",
-      green: "Protected / verified / normal where relevant",
-      blue: "Monitored point / device location / reference marker",
-      gray: "Background structure / unaffected context",
-    },
+    colorLogic: buildColorLogic(),
     includedArtifacts: [
       "Structured incident object",
       "Color-coded floor plan PDF overlay",
@@ -316,11 +356,130 @@ function buildSamplePacket(): SpatialIncidentPacketShellV1 {
   };
 }
 
+function buildOverlayZones(
+  incident: SpatialIncidentObjectV1,
+  mappings: ProtectionPointMappingV1[],
+): FloorPlanOverlayZoneV1[] {
+  const activePoint = mappings[0];
+
+  return [
+    {
+      zoneId: `${activePoint.code}-ACTIVE`,
+      floorLabel: incident.floor,
+      roomOrZone: activePoint.roomOrZone,
+      displayLabel: activePoint.label,
+      colorRole: "red",
+      coordinateHint: "Center this marker on the mapped protection point",
+      rationale: "Directly affected point for the active incident.",
+    },
+    {
+      zoneId: `${activePoint.code}-CONTEXT`,
+      floorLabel: incident.floor,
+      roomOrZone: activePoint.roomOrZone,
+      displayLabel: `${activePoint.roomOrZone} context`,
+      colorRole: "yellow",
+      coordinateHint: "Outline adjacent room or immediate spill / impact zone",
+      rationale: "Nearby concern or review-needed area around the active point.",
+    },
+    {
+      zoneId: `${activePoint.code}-REFERENCE`,
+      floorLabel: incident.floor,
+      roomOrZone: "Reference markers",
+      displayLabel: "Monitored point reference",
+      colorRole: "blue",
+      coordinateHint: "Show stable device / sensor reference marker",
+      rationale: "Identifies the monitored protection point or source label.",
+    },
+    {
+      zoneId: `${activePoint.code}-BACKGROUND`,
+      floorLabel: incident.floor,
+      roomOrZone: "Unaffected structure",
+      displayLabel: "Background plan",
+      colorRole: "gray",
+      coordinateHint: "Keep unaffected structure muted for fast comprehension",
+      rationale: "Preserves structural context without visual clutter.",
+    },
+  ];
+}
+
+function buildLegend(colorLogic: IncidentColorLogicV1): IncidentPacketLegendItemV1[] {
+  return [
+    { colorRole: "red", label: "Red", meaning: colorLogic.red },
+    { colorRole: "yellow", label: "Yellow", meaning: colorLogic.yellow },
+    { colorRole: "green", label: "Green", meaning: colorLogic.green },
+    { colorRole: "blue", label: "Blue", meaning: colorLogic.blue },
+    { colorRole: "gray", label: "Gray", meaning: colorLogic.gray },
+  ];
+}
+
+function buildLayoutSections(): IncidentPacketLayoutSectionV1[] {
+  return [
+    {
+      title: "Header",
+      purpose: "Immediate identity and incident context",
+      includedContent: ["Property name", "Street address", "Event type", "Timestamp", "Severity"],
+    },
+    {
+      title: "Floor plan overlay",
+      purpose: "Fast spatial comprehension",
+      includedContent: [
+        "Color-coded plan page",
+        "Protection-point marker",
+        "Source label",
+        "Adjacent context zone",
+      ],
+    },
+    {
+      title: "Legend and source labels",
+      purpose: "Explain rendering without ambiguity",
+      includedContent: ["Stable color legend", "Source system label", "Protection-point code"],
+    },
+    {
+      title: "Action summary and return path",
+      purpose: "Turn packet into an operational front door",
+      includedContent: ["Plain-English action summary", "Workspace return link", "Packet archive note"],
+    },
+  ];
+}
+
+function buildRenderRules(): string[] {
+  return [
+    "Use deterministic color logic only. No artistic or ambiguous rendering.",
+    "Floor plan stays as supporting evidence tied to the property record.",
+    "Show directly affected point first, then nearby concern, then reference markers.",
+    "Keep unaffected structure visually muted so the active incident reads instantly.",
+    "Legend, labels, and action summary must remain visible on every packet.",
+    "Packet composition should support later PDF generation without changing the core data model.",
+  ];
+}
+
+function buildRenderModel(
+  incident: SpatialIncidentObjectV1,
+  mappings: ProtectionPointMappingV1[],
+  packet: SpatialIncidentPacketShellV1,
+): SpatialIncidentRenderModelV1 {
+  return {
+    packetTitle: packet.packetTitle,
+    overlayZones: buildOverlayZones(incident, mappings),
+    legend: buildLegend(packet.colorLogic),
+    layoutSections: buildLayoutSections(),
+    renderRules: buildRenderRules(),
+    packetReadyState: "Render model prepared for deterministic PDF packet composition",
+  };
+}
+
 export function buildSpatialIncidentTelemetryModel(
   state: QuestionnaireStateV1,
 ): SpatialIncidentTelemetryModelV1 {
   const workspace = buildPropertyWorkspace(state);
   const mappings = buildProtectionPointMappings(state);
+  const sampleIncident = buildSampleIncident(
+    workspace.propertyId,
+    workspace.propertyName,
+    workspace.streetAddress,
+    mappings,
+  );
+  const samplePacket = buildSamplePacket();
 
   return {
     propertyId: workspace.propertyId,
@@ -332,13 +491,9 @@ export function buildSpatialIncidentTelemetryModel(
     floorPlanPages: buildFloorPlanPages(),
     protectionPointMappings: mappings,
     recipients: buildRecipients(state),
-    sampleIncident: buildSampleIncident(
-      workspace.propertyId,
-      workspace.propertyName,
-      workspace.streetAddress,
-      mappings,
-    ),
-    samplePacket: buildSamplePacket(),
+    sampleIncident,
+    samplePacket,
+    renderModel: buildRenderModel(sampleIncident, mappings, samplePacket),
     returnPaths: {
       workspace: "/partner/workspace",
       outputs: "/partner/outputs",

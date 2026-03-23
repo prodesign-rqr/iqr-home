@@ -84,13 +84,13 @@ export default function PartnerTelemetryPage() {
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Floor plan packet status</div>
-            <div className="metric-value">{telemetry.samplePacket.packetStatus}</div>
+            <div className="metric-label">Packet ready state</div>
+            <div className="metric-value">{telemetry.renderModel.packetReadyState}</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Protection points</div>
-            <div className="metric-value">{telemetry.protectionPointMappings.length}</div>
+            <div className="metric-label">Overlay zones</div>
+            <div className="metric-value">{telemetry.renderModel.overlayZones.length}</div>
           </div>
         </div>
       </section>
@@ -98,145 +98,75 @@ export default function PartnerTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Required Inputs</h2>
+            <h2>Overlay Zones</h2>
             <p className="muted">
-              This module starts with deterministic inputs, not magical guessing.
+              These zones define how a meaningful incident will be rendered onto the floor plan copy.
+            </p>
+          </div>
+        </div>
+
+        <div className="output-detail-stack">
+          {telemetry.renderModel.overlayZones.map((zone, index) => (
+            <div className="output-detail-card" key={`${zone.zoneId}-${index}`}>
+              <div className="detail-card-top">
+                <strong>{zone.displayLabel}</strong>
+                <span className="qty-chip">{zone.colorRole}</span>
+              </div>
+              <p><strong>Floor:</strong> {zone.floorLabel}</p>
+              <p><strong>Room / zone:</strong> {zone.roomOrZone}</p>
+              <p><strong>Coordinate hint:</strong> {zone.coordinateHint}</p>
+              <p><strong>Why it exists:</strong> {zone.rationale}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h2>Packet Layout</h2>
+            <p className="muted">
+              The packet needs a stable layout before it can become a PDF artifact.
+            </p>
+          </div>
+        </div>
+
+        <div className="output-detail-stack">
+          {telemetry.renderModel.layoutSections.map((section, index) => (
+            <div className="output-detail-card" key={`${section.title}-${index}`}>
+              <div className="detail-card-top">
+                <strong>{section.title}</strong>
+                <span className="qty-chip">Section</span>
+              </div>
+              <p>{section.purpose}</p>
+              <div className="bullet-list">
+                {section.includedContent.map((item, itemIndex) => (
+                  <div className="list-card" key={`${item}-${itemIndex}`}>
+                    <div>{item}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h2>Render Rules</h2>
+            <p className="muted">
+              Deterministic rules now. Actual PDF rendering comes in the next layer.
             </p>
           </div>
         </div>
 
         <div className="bullet-list">
-          {telemetry.requiredInputs.map((item, index) => (
-            <div className="list-card" key={`${item.label}-${index}`}>
-              <strong>{item.label}</strong>
-              <div>{item.status}</div>
-              <div>{item.detail}</div>
+          {telemetry.renderModel.renderRules.map((rule, index) => (
+            <div className="list-card" key={`${rule}-${index}`}>
+              <div>{rule}</div>
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Floor Plan Foundation</h2>
-            <p className="muted">
-              Master file, working/display copy, floor pages, and manual room-zone confirmation drive v1.
-            </p>
-          </div>
-        </div>
-
-        <div className="output-detail-stack">
-          <div className="output-detail-card">
-            <div className="detail-card-top">
-              <strong>Master floor plan</strong>
-              <span className="qty-chip">{telemetry.floorPlanMaster.documentStatus}</span>
-            </div>
-            <p>{telemetry.floorPlanMaster.expectedFormat}</p>
-            <p>{telemetry.floorPlanMaster.versionPolicy}</p>
-            <p>{telemetry.floorPlanMaster.note}</p>
-          </div>
-
-          {telemetry.floorPlanPages.map((page, index) => (
-            <div className="output-detail-card" key={`${page.floorLabel}-${index}`}>
-              <div className="detail-card-top">
-                <strong>{page.floorLabel}</strong>
-                <span className="qty-chip">Page {page.pageNumber}</span>
-              </div>
-              <p>{page.mappingStatus}</p>
-              <p>{page.note}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Protection-Point Mapping</h2>
-            <p className="muted">
-              Upstream events become spatially useful only when protection points are tied to rooms and zones.
-            </p>
-          </div>
-        </div>
-
-        <div className="output-detail-stack">
-          {telemetry.protectionPointMappings.map((point, index) => (
-            <div className="output-detail-card" key={`${point.code}-${index}`}>
-              <div className="detail-card-top">
-                <strong>{point.label}</strong>
-                <span className="qty-chip">{point.code}</span>
-              </div>
-              <p><strong>Room / zone:</strong> {point.roomOrZone}</p>
-              <p><strong>Source type:</strong> {point.sourceType}</p>
-              <p><strong>Upstream system:</strong> {point.upstreamSystem}</p>
-              <p><strong>Mapping status:</strong> {point.mappingStatus}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Recipient Matrix</h2>
-            <p className="muted">
-              Packets route to human recipients, while IQR stays the source of truth.
-            </p>
-          </div>
-        </div>
-
-        <div className="bullet-list">
-          {telemetry.recipients.map((recipient, index) => (
-            <div className="list-card" key={`${recipient.role}-${index}`}>
-              <strong>{recipient.role}</strong>
-              <div>{recipient.name}</div>
-              <div>{recipient.routingStatus}</div>
-              <div>{recipient.deliveryMode}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Sample Incident + Packet Shell</h2>
-            <p className="muted">
-              This is the operational front door, not a decorative attachment.
-            </p>
-          </div>
-        </div>
-
-        <div className="output-detail-stack">
-          <div className="output-detail-card">
-            <div className="detail-card-top">
-              <strong>{telemetry.sampleIncident.eventType}</strong>
-              <span className="qty-chip">{telemetry.sampleIncident.severity}</span>
-            </div>
-            <p><strong>Source:</strong> {telemetry.sampleIncident.sourceSystem}</p>
-            <p><strong>Identifier:</strong> {telemetry.sampleIncident.sourceIdentifier}</p>
-            <p><strong>Floor:</strong> {telemetry.sampleIncident.floor}</p>
-            <p><strong>Room / zone:</strong> {telemetry.sampleIncident.roomOrZone}</p>
-            <p><strong>Protection point:</strong> {telemetry.sampleIncident.protectionPoint}</p>
-            <p><strong>Action summary:</strong> {telemetry.sampleIncident.actionSummary}</p>
-          </div>
-
-          <div className="output-detail-card">
-            <div className="detail-card-top">
-              <strong>{telemetry.samplePacket.packetTitle}</strong>
-              <span className="qty-chip">{telemetry.samplePacket.packetStatus}</span>
-            </div>
-            <p><strong>Return path:</strong> {telemetry.samplePacket.returnPath}</p>
-            <p><strong>Archive policy:</strong> {telemetry.samplePacket.archivePolicy}</p>
-            <div className="bullet-list">
-              {telemetry.samplePacket.includedArtifacts.map((artifact, index) => (
-                <div className="list-card" key={`${artifact}-${index}`}>
-                  <div>{artifact}</div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
     </main>

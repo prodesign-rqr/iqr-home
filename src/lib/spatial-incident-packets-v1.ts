@@ -184,6 +184,48 @@ export type PacketDetailViewV1 = {
   pdfModel: PdfReadyPacketModelV1;
 };
 
+export type IncidentSummaryCardV1 = {
+  headline: string;
+  statusBadge: string;
+  summaryLines: string[];
+};
+
+export type SourceSummaryBlockV1 = {
+  eventType: string;
+  sourceSystem: string;
+  sourceIdentifier: string;
+  severity: string;
+  protectionPoint: string;
+};
+
+export type RecipientSummaryBlockV1 = {
+  primaryRecipient: string;
+  readyRecipients: string[];
+  pendingRecipients: string[];
+};
+
+export type PacketAssemblyStepV1 = {
+  stepId: string;
+  title: string;
+  status: string;
+  detail: string;
+};
+
+export type GeneratedArtifactPrepV1 = {
+  artifactName: string;
+  artifactFormat: string;
+  readiness: string;
+  note: string;
+};
+
+export type PacketPreviewSurfaceV1 = {
+  incidentSummaryCard: IncidentSummaryCardV1;
+  sourceSummary: SourceSummaryBlockV1;
+  recipientSummary: RecipientSummaryBlockV1;
+  assemblySteps: PacketAssemblyStepV1[];
+  generatedArtifactPrep: GeneratedArtifactPrepV1[];
+};
+
 export type SpatialIncidentTelemetryModelV1 = {
   propertyId: string;
   propertyName: string;
@@ -202,6 +244,7 @@ export type SpatialIncidentTelemetryModelV1 = {
   followUpTimeline: IncidentFollowUpNoteV1[];
   archiveEntries: IncidentArchiveEntryV1[];
   packetDetailView: PacketDetailViewV1;
+  packetPreviewSurface: PacketPreviewSurfaceV1;
   returnPaths: {
     workspace: string;
     outputs: string;
@@ -704,11 +747,7 @@ function buildBodyBlocks(): PacketBodyBlockV1[] {
       title: "Action + Return Path",
       priority: "High",
       contentType: "Operational next step",
-      includedFields: [
-        "Action summary",
-        "Return path",
-        "Archive note",
-      ],
+      includedFields: ["Action summary", "Return path", "Archive note"],
     },
   ];
 }
@@ -773,6 +812,107 @@ function buildPacketDetailView(
   };
 }
 
+function buildIncidentSummaryCard(
+  incident: SpatialIncidentObjectV1,
+): IncidentSummaryCardV1 {
+  return {
+    headline: `${incident.eventType} at ${incident.protectionPoint}`,
+    statusBadge: `${incident.severity} priority`,
+    summaryLines: [
+      `${incident.floor} / ${incident.roomOrZone}`,
+      `Source: ${incident.sourceSystem}`,
+      `Action: ${incident.actionSummary}`,
+    ],
+  };
+}
+
+function buildSourceSummary(
+  incident: SpatialIncidentObjectV1,
+): SourceSummaryBlockV1 {
+  return {
+    eventType: incident.eventType,
+    sourceSystem: incident.sourceSystem,
+    sourceIdentifier: incident.sourceIdentifier,
+    severity: incident.severity,
+    protectionPoint: incident.protectionPoint,
+  };
+}
+
+function buildRecipientSummary(
+  deliveryLog: IncidentDeliveryRecordV1[],
+): RecipientSummaryBlockV1 {
+  const readyRecipients = deliveryLog
+    .filter((entry) => entry.deliveryStatus === "Awaiting live delivery")
+    .map((entry) => `${entry.recipientRole}: ${entry.recipientName}`);
+  const pendingRecipients = deliveryLog
+    .filter((entry) => entry.deliveryStatus !== "Awaiting live delivery")
+    .map((entry) => `${entry.recipientRole}: ${entry.recipientName}`);
+
+  return {
+    primaryRecipient: readyRecipients[0] ?? "No delivery-ready recipient yet",
+    readyRecipients,
+    pendingRecipients,
+  };
+}
+
+function buildAssemblySteps(): PacketAssemblyStepV1[] {
+  return [
+    {
+      stepId: "assembly-1",
+      title: "Summarize the incident",
+      status: "Ready",
+      detail:
+        "Build the incident summary card and establish the packet headline before assembly.",
+    },
+    {
+      stepId: "assembly-2",
+      title: "Assemble packet body",
+      status: "Ready",
+      detail:
+        "Use the packet detail view blocks and page selection to assemble the packet body deterministically.",
+    },
+    {
+      stepId: "assembly-3",
+      title: "Prepare artifact output",
+      status: "Prepared",
+      detail:
+        "Hand the assembled packet content to the future generated-artifact layer without invoking live delivery yet.",
+    },
+  ];
+}
+
+function buildGeneratedArtifactPrep(): GeneratedArtifactPrepV1[] {
+  return [
+    {
+      artifactName: "Incident packet PDF",
+      artifactFormat: "PDF",
+      readiness: "Prepared",
+      note:
+        "The content model is now structured so future generation can create the packet PDF consistently.",
+    },
+    {
+      artifactName: "Packet preview card",
+      artifactFormat: "App surface",
+      readiness: "Prepared",
+      note:
+        "The preview surface can summarize the incident before opening the full packet detail view.",
+    },
+  ];
+}
+
+function buildPacketPreviewSurface(
+  incident: SpatialIncidentObjectV1,
+  deliveryLog: IncidentDeliveryRecordV1[],
+): PacketPreviewSurfaceV1 {
+  return {
+    incidentSummaryCard: buildIncidentSummaryCard(incident),
+    sourceSummary: buildSourceSummary(incident),
+    recipientSummary: buildRecipientSummary(deliveryLog),
+    assemblySteps: buildAssemblySteps(),
+    generatedArtifactPrep: buildGeneratedArtifactPrep(),
+  };
+}
+
 export function buildSpatialIncidentTelemetryModel(
   state: QuestionnaireStateV1,
 ): SpatialIncidentTelemetryModelV1 {
@@ -788,6 +928,7 @@ export function buildSpatialIncidentTelemetryModel(
   const samplePacket = buildSamplePacket();
   const recipients = buildRecipients(state);
   const renderModel = buildRenderModel(sampleIncident, mappings, samplePacket);
+  const deliveryLog = buildDeliveryLog(recipients);
 
   return {
     propertyId: workspace.propertyId,
@@ -803,7 +944,7 @@ export function buildSpatialIncidentTelemetryModel(
     samplePacket,
     renderModel,
     packetArtifact: buildPacketArtifact(workspace.propertyId, samplePacket),
-    deliveryLog: buildDeliveryLog(recipients),
+    deliveryLog,
     followUpTimeline: buildFollowUpTimeline(workspace.propertyName),
     archiveEntries: buildArchiveEntries(samplePacket),
     packetDetailView: buildPacketDetailView(
@@ -811,6 +952,7 @@ export function buildSpatialIncidentTelemetryModel(
       floorPlanPages,
       renderModel,
     ),
+    packetPreviewSurface: buildPacketPreviewSurface(sampleIncident, deliveryLog),
     returnPaths: {
       workspace: "/partner/workspace",
       outputs: "/partner/outputs",

@@ -111,6 +111,39 @@ export type SpatialIncidentRenderModelV1 = {
   packetReadyState: string;
 };
 
+export type IncidentPacketArtifactV1 = {
+  artifactId: string;
+  artifactType: string;
+  artifactStatus: string;
+  viewerMode: string;
+  packetStatus: string;
+  returnPath: string;
+  archiveStorage: string;
+};
+
+export type IncidentDeliveryRecordV1 = {
+  recipientRole: string;
+  recipientName: string;
+  deliveryChannel: string;
+  deliveryStatus: string;
+  deliveryTimestamp: string;
+  note: string;
+};
+
+export type IncidentFollowUpNoteV1 = {
+  status: string;
+  owner: string;
+  note: string;
+  timestamp: string;
+};
+
+export type IncidentArchiveEntryV1 = {
+  entryType: string;
+  status: string;
+  linkedSurface: string;
+  note: string;
+};
+
 export type SpatialIncidentTelemetryModelV1 = {
   propertyId: string;
   propertyName: string;
@@ -124,6 +157,10 @@ export type SpatialIncidentTelemetryModelV1 = {
   sampleIncident: SpatialIncidentObjectV1;
   samplePacket: SpatialIncidentPacketShellV1;
   renderModel: SpatialIncidentRenderModelV1;
+  packetArtifact: IncidentPacketArtifactV1;
+  deliveryLog: IncidentDeliveryRecordV1[];
+  followUpTimeline: IncidentFollowUpNoteV1[];
+  archiveEntries: IncidentArchiveEntryV1[];
   returnPaths: {
     workspace: string;
     outputs: string;
@@ -417,7 +454,13 @@ function buildLayoutSections(): IncidentPacketLayoutSectionV1[] {
     {
       title: "Header",
       purpose: "Immediate identity and incident context",
-      includedContent: ["Property name", "Street address", "Event type", "Timestamp", "Severity"],
+      includedContent: [
+        "Property name",
+        "Street address",
+        "Event type",
+        "Timestamp",
+        "Severity",
+      ],
     },
     {
       title: "Floor plan overlay",
@@ -432,12 +475,20 @@ function buildLayoutSections(): IncidentPacketLayoutSectionV1[] {
     {
       title: "Legend and source labels",
       purpose: "Explain rendering without ambiguity",
-      includedContent: ["Stable color legend", "Source system label", "Protection-point code"],
+      includedContent: [
+        "Stable color legend",
+        "Source system label",
+        "Protection-point code",
+      ],
     },
     {
       title: "Action summary and return path",
       purpose: "Turn packet into an operational front door",
-      includedContent: ["Plain-English action summary", "Workspace return link", "Packet archive note"],
+      includedContent: [
+        "Plain-English action summary",
+        "Workspace return link",
+        "Packet archive note",
+      ],
     },
   ];
 }
@@ -468,6 +519,88 @@ function buildRenderModel(
   };
 }
 
+function buildPacketArtifact(
+  propertyId: string,
+  packet: SpatialIncidentPacketShellV1,
+): IncidentPacketArtifactV1 {
+  return {
+    artifactId: `${propertyId}-PACKET-001`,
+    artifactType: "Incident packet artifact shell",
+    artifactStatus: "Ready for PDF generation layer",
+    viewerMode: "Openable packet front door with return path",
+    packetStatus: packet.packetStatus,
+    returnPath: packet.returnPath,
+    archiveStorage: "Property timeline / permanent archive lane",
+  };
+}
+
+function buildDeliveryLog(
+  recipients: TelemetryRecipientV1[],
+): IncidentDeliveryRecordV1[] {
+  return recipients.map((recipient, index) => ({
+    recipientRole: recipient.role,
+    recipientName: recipient.name,
+    deliveryChannel: recipient.deliveryMode,
+    deliveryStatus:
+      recipient.routingStatus === "Ready" ? "Awaiting live delivery" : "Routing incomplete",
+    deliveryTimestamp: index === 0 ? "Awaiting live event timestamp" : "Pending",
+    note:
+      recipient.routingStatus === "Ready"
+        ? "Recipient is eligible for deterministic packet delivery in a future delivery pack."
+        : "Recipient route must be completed before production packet delivery.",
+  }));
+}
+
+function buildFollowUpTimeline(workspaceName: string): IncidentFollowUpNoteV1[] {
+  return [
+    {
+      status: "Packet shell prepared",
+      owner: "IQR telemetry lane",
+      note:
+        "Render model, artifact shell, and archive posture are defined for the current property.",
+      timestamp: "Design-time / pre-live event",
+    },
+    {
+      status: "Awaiting live incident",
+      owner: workspaceName,
+      note:
+        "No live packet delivery occurs yet. Future pack will convert this shell into an actual packet workflow.",
+      timestamp: "Pending",
+    },
+  ];
+}
+
+function buildArchiveEntries(
+  packet: SpatialIncidentPacketShellV1,
+): IncidentArchiveEntryV1[] {
+  return [
+    {
+      entryType: "Packet PDF",
+      status: "Reserved",
+      linkedSurface: "/partner/workspace",
+      note: "This archive slot will hold the rendered packet PDF artifact.",
+    },
+    {
+      entryType: "Structured event object",
+      status: "Reserved",
+      linkedSurface: "/partner/telemetry",
+      note: "Raw structured event data will archive alongside the packet.",
+    },
+    {
+      entryType: "Delivery log",
+      status: "Reserved",
+      linkedSurface: "/hq/telemetry",
+      note: "Delivery records and routing outcomes will live with the archive.",
+    },
+    {
+      entryType: "Follow-up notes",
+      status: "Reserved",
+      linkedSurface: packet.returnPath,
+      note: "Subsequent notes and status changes will remain tied to the property workspace.",
+    },
+  ];
+}
+
 export function buildSpatialIncidentTelemetryModel(
   state: QuestionnaireStateV1,
 ): SpatialIncidentTelemetryModelV1 {
@@ -480,6 +613,7 @@ export function buildSpatialIncidentTelemetryModel(
     mappings,
   );
   const samplePacket = buildSamplePacket();
+  const recipients = buildRecipients(state);
 
   return {
     propertyId: workspace.propertyId,
@@ -490,10 +624,14 @@ export function buildSpatialIncidentTelemetryModel(
     floorPlanMaster: buildFloorPlanMaster(),
     floorPlanPages: buildFloorPlanPages(),
     protectionPointMappings: mappings,
-    recipients: buildRecipients(state),
+    recipients,
     sampleIncident,
     samplePacket,
     renderModel: buildRenderModel(sampleIncident, mappings, samplePacket),
+    packetArtifact: buildPacketArtifact(workspace.propertyId, samplePacket),
+    deliveryLog: buildDeliveryLog(recipients),
+    followUpTimeline: buildFollowUpTimeline(workspace.propertyName),
+    archiveEntries: buildArchiveEntries(samplePacket),
     returnPaths: {
       workspace: "/partner/workspace",
       outputs: "/partner/outputs",

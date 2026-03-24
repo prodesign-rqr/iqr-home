@@ -9,7 +9,7 @@ import {
 } from "../../../lib/questionnaire-state-v1";
 import { buildSpatialIncidentTelemetryModel } from "../../../lib/spatial-incident-packets-v1";
 
-export default function PartnerTelemetryPage() {
+export default function HQTelemetryPage() {
   const [state, setState] = useState<QuestionnaireStateV1 | null>(null);
 
   useEffect(() => {
@@ -36,9 +36,9 @@ export default function PartnerTelemetryPage() {
           />
         </div>
 
-        <h1>Spatial Incident Packet Engine</h1>
+        <h1>HQ Telemetry</h1>
         <p>
-          Telemetry foundation for turning meaningful property events into IQR-owned incident packets with spatial context.
+          HQ-side view of incident packet requirements, routing posture, archive behavior, and return-path continuity.
         </p>
 
         <div className="subpage-nav">
@@ -47,16 +47,16 @@ export default function PartnerTelemetryPage() {
           </Link>
 
           <div className="subpage-nav-links">
-            <Link href="/partner" className="subnav-pill">
-              Partner Entry
+            <Link href="/hq" className="subnav-pill">
+              HQ Admin
             </Link>
             <Link href="/partner/workspace" className="subnav-pill">
               Property Workspace
             </Link>
-            <span className="subnav-pill current">Telemetry</span>
-            <Link href="/hq/telemetry" className="subnav-pill">
-              HQ Telemetry
+            <Link href="/partner/telemetry" className="subnav-pill">
+              Partner Telemetry
             </Link>
+            <span className="subnav-pill current">HQ Telemetry</span>
           </div>
         </div>
       </section>
@@ -64,9 +64,9 @@ export default function PartnerTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>{telemetry.propertyName}</h2>
+            <h2>Packet Continuity Layer</h2>
             <p className="muted">
-              The property stays the anchor. Floor plans, events, recipients, and packets all attach to the house record.
+              This layer adds the packet artifact shell, delivery record structure, and archive linkage model.
             </p>
           </div>
           <div className="status-pill">{telemetry.currentStatus}</div>
@@ -74,23 +74,23 @@ export default function PartnerTelemetryPage() {
 
         <div className="grid two-col">
           <div className="metric-card">
-            <div className="metric-label">Property ID</div>
-            <div className="metric-value">{telemetry.propertyId}</div>
+            <div className="metric-label">Artifact status</div>
+            <div className="metric-value">{telemetry.packetArtifact.artifactStatus}</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Street address</div>
-            <div className="metric-value">{telemetry.streetAddress}</div>
+            <div className="metric-label">Delivery entries</div>
+            <div className="metric-value">{telemetry.deliveryLog.length}</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Packet ready state</div>
-            <div className="metric-value">{telemetry.renderModel.packetReadyState}</div>
+            <div className="metric-label">Follow-up entries</div>
+            <div className="metric-value">{telemetry.followUpTimeline.length}</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Overlay zones</div>
-            <div className="metric-value">{telemetry.renderModel.overlayZones.length}</div>
+            <div className="metric-label">Archive entries</div>
+            <div className="metric-value">{telemetry.archiveEntries.length}</div>
           </div>
         </div>
       </section>
@@ -98,73 +98,78 @@ export default function PartnerTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Overlay Zones</h2>
+            <h2>Delivery Matrix</h2>
             <p className="muted">
-              These zones define how a meaningful incident will be rendered onto the floor plan copy.
-            </p>
-          </div>
-        </div>
-
-        <div className="output-detail-stack">
-          {telemetry.renderModel.overlayZones.map((zone, index) => (
-            <div className="output-detail-card" key={`${zone.zoneId}-${index}`}>
-              <div className="detail-card-top">
-                <strong>{zone.displayLabel}</strong>
-                <span className="qty-chip">{zone.colorRole}</span>
-              </div>
-              <p><strong>Floor:</strong> {zone.floorLabel}</p>
-              <p><strong>Room / zone:</strong> {zone.roomOrZone}</p>
-              <p><strong>Coordinate hint:</strong> {zone.coordinateHint}</p>
-              <p><strong>Why it exists:</strong> {zone.rationale}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Packet Layout</h2>
-            <p className="muted">
-              The packet needs a stable layout before it can become a PDF artifact.
-            </p>
-          </div>
-        </div>
-
-        <div className="output-detail-stack">
-          {telemetry.renderModel.layoutSections.map((section, index) => (
-            <div className="output-detail-card" key={`${section.title}-${index}`}>
-              <div className="detail-card-top">
-                <strong>{section.title}</strong>
-                <span className="qty-chip">Section</span>
-              </div>
-              <p>{section.purpose}</p>
-              <div className="bullet-list">
-                {section.includedContent.map((item, itemIndex) => (
-                  <div className="list-card" key={`${item}-${itemIndex}`}>
-                    <div>{item}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Render Rules</h2>
-            <p className="muted">
-              Deterministic rules now. Actual PDF rendering comes in the next layer.
+              Live delivery will come later, but the routing shell and evidence trail are defined now.
             </p>
           </div>
         </div>
 
         <div className="bullet-list">
-          {telemetry.renderModel.renderRules.map((rule, index) => (
-            <div className="list-card" key={`${rule}-${index}`}>
-              <div>{rule}</div>
+          {telemetry.deliveryLog.map((entry, index) => (
+            <div className="list-card" key={`${entry.recipientRole}-${index}`}>
+              <strong>{entry.recipientRole}</strong>
+              <div>{entry.recipientName}</div>
+              <div>{entry.deliveryChannel}</div>
+              <div>{entry.deliveryStatus}</div>
+              <div>{entry.note}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h2>Return + Archive Surfaces</h2>
+            <p className="muted">
+              The packet front door resolves back into the workspace and the property timeline.
+            </p>
+          </div>
+        </div>
+
+        <div className="output-detail-stack">
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>Return paths</strong>
+              <span className="qty-chip">Linked</span>
+            </div>
+            <p><strong>Workspace:</strong> {telemetry.returnPaths.workspace}</p>
+            <p><strong>Outputs:</strong> {telemetry.returnPaths.outputs}</p>
+            <p><strong>HQ:</strong> {telemetry.returnPaths.hq}</p>
+          </div>
+
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>Archive entries</strong>
+              <span className="qty-chip">Permanent</span>
+            </div>
+            {telemetry.archiveEntries.map((entry, index) => (
+              <p key={`${entry.entryType}-${index}`}>
+                <strong>{entry.entryType}:</strong> {entry.note}
+              </p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h2>Follow-Up Timeline</h2>
+            <p className="muted">
+              Follow-up continuity is part of the packet model, not an afterthought.
+            </p>
+          </div>
+        </div>
+
+        <div className="bullet-list">
+          {telemetry.followUpTimeline.map((entry, index) => (
+            <div className="list-card" key={`${entry.status}-${index}`}>
+              <strong>{entry.status}</strong>
+              <div>{entry.owner}</div>
+              <div>{entry.note}</div>
+              <div>{entry.timestamp}</div>
             </div>
           ))}
         </div>

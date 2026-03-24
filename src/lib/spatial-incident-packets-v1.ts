@@ -186,19 +186,24 @@ export type PacketDetailViewV1 = {
 
 export type IncidentSummaryCardV1 = {
   headline: string;
-  statusBadge: string;
-  summaryLines: string[];
+  priority: string;
+  floorAndZone: string;
+  sourceLine: string;
+  actionLine: string;
 };
 
 export type SourceSummaryBlockV1 = {
+  title: string;
+  priority: string;
   eventType: string;
   sourceSystem: string;
   sourceIdentifier: string;
-  severity: string;
   protectionPoint: string;
 };
 
 export type RecipientSummaryBlockV1 = {
+  title: string;
+  readyCount: number;
   primaryRecipient: string;
   readyRecipients: string[];
   pendingRecipients: string[];
@@ -208,22 +213,53 @@ export type PacketAssemblyStepV1 = {
   stepId: string;
   title: string;
   status: string;
-  detail: string;
+  description: string;
 };
 
-export type GeneratedArtifactPrepV1 = {
-  artifactName: string;
+export type ArtifactPrepItemV1 = {
+  itemId: string;
+  title: string;
+  outputType: string;
+  status: string;
+  description: string;
+};
+
+export type GeneratedArtifactSurfaceV1 = {
+  artifactTitle: string;
+  artifactFilename: string;
   artifactFormat: string;
-  readiness: string;
-  note: string;
+  artifactStatus: string;
+  viewerSurface: string;
+  exportMode: string;
+  archiveMode: string;
+  generationNote: string;
 };
 
-export type PacketPreviewSurfaceV1 = {
-  incidentSummaryCard: IncidentSummaryCardV1;
-  sourceSummary: SourceSummaryBlockV1;
-  recipientSummary: RecipientSummaryBlockV1;
-  assemblySteps: PacketAssemblyStepV1[];
-  generatedArtifactPrep: GeneratedArtifactPrepV1[];
+export type GeneratedArtifactSectionV1 = {
+  sectionId: string;
+  title: string;
+  sectionType: string;
+  status: string;
+  description: string;
+  includedItems: string[];
+};
+
+export type OutputRoutingReadinessV1 = {
+  routeId: string;
+  audience: string;
+  routeType: string;
+  status: string;
+  gatingReason: string;
+  destinationSurface: string;
+};
+
+export type ArchiveHandoffRecordV1 = {
+  recordId: string;
+  artifactName: string;
+  archiveStatus: string;
+  handoffStatus: string;
+  linkedSurface: string;
+  note: string;
 };
 
 export type SpatialIncidentTelemetryModelV1 = {
@@ -244,7 +280,15 @@ export type SpatialIncidentTelemetryModelV1 = {
   followUpTimeline: IncidentFollowUpNoteV1[];
   archiveEntries: IncidentArchiveEntryV1[];
   packetDetailView: PacketDetailViewV1;
-  packetPreviewSurface: PacketPreviewSurfaceV1;
+  incidentSummaryCard: IncidentSummaryCardV1;
+  sourceSummary: SourceSummaryBlockV1;
+  recipientSummary: RecipientSummaryBlockV1;
+  packetAssemblySteps: PacketAssemblyStepV1[];
+  artifactPrepItems: ArtifactPrepItemV1[];
+  generatedArtifactSurface: GeneratedArtifactSurfaceV1;
+  generatedArtifactSections: GeneratedArtifactSectionV1[];
+  outputRoutingReadiness: OutputRoutingReadinessV1[];
+  archiveHandoffRecord: ArchiveHandoffRecordV1;
   returnPaths: {
     workspace: string;
     outputs: string;
@@ -747,7 +791,11 @@ function buildBodyBlocks(): PacketBodyBlockV1[] {
       title: "Action + Return Path",
       priority: "High",
       contentType: "Operational next step",
-      includedFields: ["Action summary", "Return path", "Archive note"],
+      includedFields: [
+        "Action summary",
+        "Return path",
+        "Archive note",
+      ],
     },
   ];
 }
@@ -817,12 +865,10 @@ function buildIncidentSummaryCard(
 ): IncidentSummaryCardV1 {
   return {
     headline: `${incident.eventType} at ${incident.protectionPoint}`,
-    statusBadge: `${incident.severity} priority`,
-    summaryLines: [
-      `${incident.floor} / ${incident.roomOrZone}`,
-      `Source: ${incident.sourceSystem}`,
-      `Action: ${incident.actionSummary}`,
-    ],
+    priority: "High priority",
+    floorAndZone: `${incident.floor} / ${incident.roomOrZone}`,
+    sourceLine: `Source: ${incident.sourceSystem}`,
+    actionLine: `Action: ${incident.actionSummary}`,
   };
 }
 
@@ -830,86 +876,184 @@ function buildSourceSummary(
   incident: SpatialIncidentObjectV1,
 ): SourceSummaryBlockV1 {
   return {
+    title: "Source Summary",
+    priority: "High",
     eventType: incident.eventType,
     sourceSystem: incident.sourceSystem,
     sourceIdentifier: incident.sourceIdentifier,
-    severity: incident.severity,
     protectionPoint: incident.protectionPoint,
   };
 }
 
 function buildRecipientSummary(
-  deliveryLog: IncidentDeliveryRecordV1[],
+  recipients: TelemetryRecipientV1[],
 ): RecipientSummaryBlockV1 {
-  const readyRecipients = deliveryLog
-    .filter((entry) => entry.deliveryStatus === "Awaiting live delivery")
-    .map((entry) => `${entry.recipientRole}: ${entry.recipientName}`);
-  const pendingRecipients = deliveryLog
-    .filter((entry) => entry.deliveryStatus !== "Awaiting live delivery")
-    .map((entry) => `${entry.recipientRole}: ${entry.recipientName}`);
+  const readyRecipients = recipients
+    .filter((recipient) => recipient.routingStatus === "Ready")
+    .map((recipient) => `${recipient.role}: ${recipient.name}`);
+
+  const pendingRecipients = recipients
+    .filter((recipient) => recipient.routingStatus !== "Ready")
+    .map((recipient) => `${recipient.role}: ${recipient.name}`);
 
   return {
-    primaryRecipient: readyRecipients[0] ?? "No delivery-ready recipient yet",
+    title: "Recipient Summary",
+    readyCount: readyRecipients.length,
+    primaryRecipient: readyRecipients[0] ?? "No ready recipient yet",
     readyRecipients,
     pendingRecipients,
   };
 }
 
-function buildAssemblySteps(): PacketAssemblyStepV1[] {
+function buildPacketAssemblySteps(): PacketAssemblyStepV1[] {
   return [
     {
       stepId: "assembly-1",
       title: "Summarize the incident",
       status: "Ready",
-      detail:
+      description:
         "Build the incident summary card and establish the packet headline before assembly.",
     },
     {
       stepId: "assembly-2",
       title: "Assemble packet body",
       status: "Ready",
-      detail:
+      description:
         "Use the packet detail view blocks and page selection to assemble the packet body deterministically.",
     },
     {
       stepId: "assembly-3",
       title: "Prepare artifact output",
       status: "Prepared",
-      detail:
+      description:
         "Hand the assembled packet content to the future generated-artifact layer without invoking live delivery yet.",
     },
   ];
 }
 
-function buildGeneratedArtifactPrep(): GeneratedArtifactPrepV1[] {
+function buildArtifactPrepItems(): ArtifactPrepItemV1[] {
   return [
     {
-      artifactName: "Incident packet PDF",
-      artifactFormat: "PDF",
-      readiness: "Prepared",
-      note:
+      itemId: "prep-pdf",
+      title: "Incident packet PDF",
+      outputType: "PDF",
+      status: "Prepared",
+      description:
         "The content model is now structured so future generation can create the packet PDF consistently.",
     },
     {
-      artifactName: "Packet preview card",
-      artifactFormat: "App surface",
-      readiness: "Prepared",
-      note:
+      itemId: "prep-preview-card",
+      title: "Packet preview card",
+      outputType: "App surface",
+      status: "Prepared",
+      description:
         "The preview surface can summarize the incident before opening the full packet detail view.",
     },
   ];
 }
 
-function buildPacketPreviewSurface(
-  incident: SpatialIncidentObjectV1,
-  deliveryLog: IncidentDeliveryRecordV1[],
-): PacketPreviewSurfaceV1 {
+function buildGeneratedArtifactSurface(
+  propertyName: string,
+  incidentSummary: IncidentSummaryCardV1,
+): GeneratedArtifactSurfaceV1 {
+  const filenameBase =
+    propertyName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") || "property";
+
   return {
-    incidentSummaryCard: buildIncidentSummaryCard(incident),
-    sourceSummary: buildSourceSummary(incident),
-    recipientSummary: buildRecipientSummary(deliveryLog),
-    assemblySteps: buildAssemblySteps(),
-    generatedArtifactPrep: buildGeneratedArtifactPrep(),
+    artifactTitle: `${propertyName} Incident Packet Preview`,
+    artifactFilename: `${filenameBase}-incident-packet-preview.pdf`,
+    artifactFormat: "PDF preview artifact",
+    artifactStatus: "Prepared for future generated output",
+    viewerSurface: "Packet preview surface + full packet detail surface",
+    exportMode: "Generated artifact layer will emit the file once enabled",
+    archiveMode: "Archive alongside packet record and workspace return path",
+    generationNote: `Primary headline: ${incidentSummary.headline}`,
+  };
+}
+
+function buildGeneratedArtifactSections(
+  incidentSummary: IncidentSummaryCardV1,
+): GeneratedArtifactSectionV1[] {
+  return [
+    {
+      sectionId: "artifact-summary",
+      title: "Summary header",
+      sectionType: "Header",
+      status: "Ready",
+      description:
+        "Lead with the incident headline, priority, floor/zone, and first-glance context.",
+      includedItems: [
+        incidentSummary.headline,
+        incidentSummary.priority,
+        incidentSummary.floorAndZone,
+      ],
+    },
+    {
+      sectionId: "artifact-detail",
+      title: "Detail body",
+      sectionType: "Packet body",
+      status: "Ready",
+      description:
+        "Carry the selected floor-plan page, body blocks, labels, and action summary into the artifact.",
+      includedItems: [
+        "Selected page",
+        "Packet body blocks",
+        "Source labels",
+        "Action summary",
+      ],
+    },
+    {
+      sectionId: "artifact-return",
+      title: "Return + archive footer",
+      sectionType: "Footer",
+      status: "Prepared",
+      description:
+        "Keep the return path and archive note visible so the artifact stays attached to the property record.",
+      includedItems: [
+        "Return path",
+        "Archive note",
+        "Artifact filename",
+      ],
+    },
+  ];
+}
+
+function buildOutputRoutingReadiness(
+  recipients: TelemetryRecipientV1[],
+): OutputRoutingReadinessV1[] {
+  return recipients.map((recipient, index) => ({
+    routeId: `route-${index + 1}`,
+    audience: `${recipient.role}: ${recipient.name}`,
+    routeType: recipient.deliveryMode,
+    status:
+      recipient.routingStatus === "Ready"
+        ? "Prepared for future artifact routing"
+        : "Blocked until routing is completed",
+    gatingReason:
+      recipient.routingStatus === "Ready"
+        ? "Recipient is already marked ready in the deterministic routing profile."
+        : "Recipient is not fully configured yet.",
+    destinationSurface:
+      recipient.routingStatus === "Ready"
+        ? "Preview card -> future generated artifact -> workspace return path"
+        : "Remain on packet preview surface until routing is completed",
+  }));
+}
+
+function buildArchiveHandoffRecord(
+  artifact: GeneratedArtifactSurfaceV1,
+): ArchiveHandoffRecordV1 {
+  return {
+    recordId: "archive-handoff-001",
+    artifactName: artifact.artifactFilename,
+    archiveStatus: "Prepared for permanent archive handoff",
+    handoffStatus: "Waiting on generated artifact layer",
+    linkedSurface: "/partner/workspace",
+    note:
+      "Once generated output is enabled, the artifact should hand off into the permanent property timeline with a stable return path.",
   };
 }
 
@@ -928,7 +1072,20 @@ export function buildSpatialIncidentTelemetryModel(
   const samplePacket = buildSamplePacket();
   const recipients = buildRecipients(state);
   const renderModel = buildRenderModel(sampleIncident, mappings, samplePacket);
-  const deliveryLog = buildDeliveryLog(recipients);
+  const packetDetailView = buildPacketDetailView(
+    sampleIncident,
+    floorPlanPages,
+    renderModel,
+  );
+  const incidentSummaryCard = buildIncidentSummaryCard(sampleIncident);
+  const sourceSummary = buildSourceSummary(sampleIncident);
+  const recipientSummary = buildRecipientSummary(recipients);
+  const packetAssemblySteps = buildPacketAssemblySteps();
+  const artifactPrepItems = buildArtifactPrepItems();
+  const generatedArtifactSurface = buildGeneratedArtifactSurface(
+    workspace.propertyName,
+    incidentSummaryCard,
+  );
 
   return {
     propertyId: workspace.propertyId,
@@ -944,15 +1101,19 @@ export function buildSpatialIncidentTelemetryModel(
     samplePacket,
     renderModel,
     packetArtifact: buildPacketArtifact(workspace.propertyId, samplePacket),
-    deliveryLog,
+    deliveryLog: buildDeliveryLog(recipients),
     followUpTimeline: buildFollowUpTimeline(workspace.propertyName),
     archiveEntries: buildArchiveEntries(samplePacket),
-    packetDetailView: buildPacketDetailView(
-      sampleIncident,
-      floorPlanPages,
-      renderModel,
-    ),
-    packetPreviewSurface: buildPacketPreviewSurface(sampleIncident, deliveryLog),
+    packetDetailView,
+    incidentSummaryCard,
+    sourceSummary,
+    recipientSummary,
+    packetAssemblySteps,
+    artifactPrepItems,
+    generatedArtifactSurface,
+    generatedArtifactSections: buildGeneratedArtifactSections(incidentSummaryCard),
+    outputRoutingReadiness: buildOutputRoutingReadiness(recipients),
+    archiveHandoffRecord: buildArchiveHandoffRecord(generatedArtifactSurface),
     returnPaths: {
       workspace: "/partner/workspace",
       outputs: "/partner/outputs",

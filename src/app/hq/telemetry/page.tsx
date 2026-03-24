@@ -38,7 +38,7 @@ export default function HQTelemetryPage() {
 
         <h1>HQ Telemetry</h1>
         <p>
-          HQ-side view of incident packet preview readiness, source and recipient summaries, and output-preparation structure.
+          HQ-side view of artifact-surface readiness, output-routing posture, and archive-handoff structure.
         </p>
 
         <div className="subpage-nav">
@@ -64,9 +64,9 @@ export default function HQTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Packet Preview Readiness</h2>
+            <h2>Generated Artifact Readiness</h2>
             <p className="muted">
-              This layer adds the preview surface, the source and recipient summary split, and output-preparation structure.
+              This layer adds the generated artifact surface, routing matrix, and archive handoff record.
             </p>
           </div>
           <div className="status-pill">{telemetry.currentStatus}</div>
@@ -74,30 +74,30 @@ export default function HQTelemetryPage() {
 
         <div className="grid two-col">
           <div className="metric-card">
-            <div className="metric-label">Summary card</div>
+            <div className="metric-label">Artifact filename</div>
             <div className="metric-value">
-              {telemetry.packetPreviewSurface.incidentSummaryCard.statusBadge}
+              {telemetry.generatedArtifactSurface.artifactFilename}
             </div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Ready recipients</div>
+            <div className="metric-label">Artifact sections</div>
             <div className="metric-value">
-              {telemetry.packetPreviewSurface.recipientSummary.readyRecipients.length}
+              {telemetry.generatedArtifactSections.length}
             </div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Assembly steps</div>
+            <div className="metric-label">Routing rows</div>
             <div className="metric-value">
-              {telemetry.packetPreviewSurface.assemblySteps.length}
+              {telemetry.outputRoutingReadiness.length}
             </div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Artifact prep items</div>
+            <div className="metric-label">Archive handoff</div>
             <div className="metric-value">
-              {telemetry.packetPreviewSurface.generatedArtifactPrep.length}
+              {telemetry.archiveHandoffRecord.handoffStatus}
             </div>
           </div>
         </div>
@@ -106,9 +106,9 @@ export default function HQTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Incident Summary Card</h2>
+            <h2>Generated Artifact Surface</h2>
             <p className="muted">
-              The summary card becomes the front-door preview before a human opens the full packet detail.
+              HQ should be able to inspect the future output surface before live artifact generation exists.
             </p>
           </div>
         </div>
@@ -116,101 +116,59 @@ export default function HQTelemetryPage() {
         <div className="output-detail-stack">
           <div className="output-detail-card">
             <div className="detail-card-top">
-              <strong>{telemetry.packetPreviewSurface.incidentSummaryCard.headline}</strong>
+              <strong>{telemetry.generatedArtifactSurface.artifactTitle}</strong>
               <span className="qty-chip">
-                {telemetry.packetPreviewSurface.incidentSummaryCard.statusBadge}
+                {telemetry.generatedArtifactSurface.artifactStatus}
               </span>
             </div>
-            <div className="bullet-list">
-              {telemetry.packetPreviewSurface.incidentSummaryCard.summaryLines.map(
-                (line, index) => (
-                  <div className="list-card" key={`${line}-${index}`}>
-                    <div>{line}</div>
+            <p>
+              <strong>Filename:</strong>{" "}
+              {telemetry.generatedArtifactSurface.artifactFilename}
+            </p>
+            <p>
+              <strong>Viewer surface:</strong>{" "}
+              {telemetry.generatedArtifactSurface.viewerSurface}
+            </p>
+            <p>
+              <strong>Export mode:</strong>{" "}
+              {telemetry.generatedArtifactSurface.exportMode}
+            </p>
+            <p>
+              <strong>Archive mode:</strong>{" "}
+              {telemetry.generatedArtifactSurface.archiveMode}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h2>Artifact Section Stack</h2>
+            <p className="muted">
+              These are the stable artifact sections that should be emitted once output generation is turned on.
+            </p>
+          </div>
+        </div>
+
+        <div className="output-detail-stack">
+          {telemetry.generatedArtifactSections.map((section, index) => (
+            <div className="output-detail-card" key={`${section.sectionId}-${index}`}>
+              <div className="detail-card-top">
+                <strong>{section.title}</strong>
+                <span className="qty-chip">{section.status}</span>
+              </div>
+              <p>
+                <strong>Type:</strong> {section.sectionType}
+              </p>
+              <p>{section.description}</p>
+              <div className="bullet-list">
+                {section.includedItems.map((item, itemIndex) => (
+                  <div className="list-card" key={`${item}-${itemIndex}`}>
+                    <div>{item}</div>
                   </div>
-                ),
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Source + Recipient Summary Blocks</h2>
-            <p className="muted">
-              These blocks let HQ understand who triggered the packet and who should receive it before full delivery is added.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid two-col">
-          <div className="output-detail-card">
-            <div className="detail-card-top">
-              <strong>Source Summary</strong>
-              <span className="qty-chip">
-                {telemetry.packetPreviewSurface.sourceSummary.severity}
-              </span>
-            </div>
-            <p>
-              <strong>Event type:</strong>{" "}
-              {telemetry.packetPreviewSurface.sourceSummary.eventType}
-            </p>
-            <p>
-              <strong>Source system:</strong>{" "}
-              {telemetry.packetPreviewSurface.sourceSummary.sourceSystem}
-            </p>
-            <p>
-              <strong>Source identifier:</strong>{" "}
-              {telemetry.packetPreviewSurface.sourceSummary.sourceIdentifier}
-            </p>
-            <p>
-              <strong>Protection point:</strong>{" "}
-              {telemetry.packetPreviewSurface.sourceSummary.protectionPoint}
-            </p>
-          </div>
-
-          <div className="output-detail-card">
-            <div className="detail-card-top">
-              <strong>Recipient Summary</strong>
-              <span className="qty-chip">
-                {telemetry.packetPreviewSurface.recipientSummary.readyRecipients.length} ready
-              </span>
-            </div>
-            <p>
-              <strong>Primary recipient:</strong>{" "}
-              {telemetry.packetPreviewSurface.recipientSummary.primaryRecipient}
-            </p>
-            <p>
-              <strong>Ready recipients:</strong>{" "}
-              {telemetry.packetPreviewSurface.recipientSummary.readyRecipients.join(" | ") ||
-                "None"}
-            </p>
-            <p>
-              <strong>Pending recipients:</strong>{" "}
-              {telemetry.packetPreviewSurface.recipientSummary.pendingRecipients.join(" | ") ||
-                "None"}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Packet Assembly Structure</h2>
-            <p className="muted">
-              The packet preview now has an explicit assembly structure before generated artifacts become real outputs.
-            </p>
-          </div>
-        </div>
-
-        <div className="bullet-list">
-          {telemetry.packetPreviewSurface.assemblySteps.map((step, index) => (
-            <div className="list-card" key={`${step.stepId}-${index}`}>
-              <strong>{step.title}</strong>
-              <div>{step.status}</div>
-              <div>{step.detail}</div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -219,22 +177,56 @@ export default function HQTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Artifact Output Preparation</h2>
+            <h2>Output Routing Matrix</h2>
             <p className="muted">
-              These prep items define what the future generated-artifact layer should emit once real packet output is enabled.
+              Routing posture is still pre-delivery, but HQ can now inspect which artifact paths are ready and which are blocked.
             </p>
           </div>
         </div>
 
         <div className="bullet-list">
-          {telemetry.packetPreviewSurface.generatedArtifactPrep.map((item, index) => (
-            <div className="list-card" key={`${item.artifactName}-${index}`}>
-              <strong>{item.artifactName}</strong>
-              <div>{item.artifactFormat}</div>
-              <div>{item.readiness}</div>
-              <div>{item.note}</div>
+          {telemetry.outputRoutingReadiness.map((route, index) => (
+            <div className="list-card" key={`${route.routeId}-${index}`}>
+              <strong>{route.audience}</strong>
+              <div>{route.routeType}</div>
+              <div>{route.status}</div>
+              <div>{route.gatingReason}</div>
+              <div>{route.destinationSurface}</div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="section-card">
+        <div className="section-header">
+          <div>
+            <h2>Archive Handoff Record</h2>
+            <p className="muted">
+              Once the generated artifact exists, it needs a deterministic handoff into the permanent property archive lane.
+            </p>
+          </div>
+        </div>
+
+        <div className="output-detail-stack">
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>{telemetry.archiveHandoffRecord.artifactName}</strong>
+              <span className="qty-chip">
+                {telemetry.archiveHandoffRecord.archiveStatus}
+              </span>
+            </div>
+            <p>
+              <strong>Handoff status:</strong>{" "}
+              {telemetry.archiveHandoffRecord.handoffStatus}
+            </p>
+            <p>
+              <strong>Linked surface:</strong>{" "}
+              {telemetry.archiveHandoffRecord.linkedSurface}
+            </p>
+            <p>
+              <strong>Note:</strong> {telemetry.archiveHandoffRecord.note}
+            </p>
+          </div>
         </div>
       </section>
     </main>

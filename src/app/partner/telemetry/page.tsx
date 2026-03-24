@@ -74,23 +74,26 @@ export default function PartnerTelemetryPage() {
 
         <div className="grid two-col">
           <div className="metric-card">
-            <div className="metric-label">Property ID</div>
-            <div className="metric-value">{telemetry.propertyId}</div>
+            <div className="metric-label">Selected floor page</div>
+            <div className="metric-value">
+              {telemetry.packetDetailView.pageSelection.floorLabel} / Page{" "}
+              {telemetry.packetDetailView.pageSelection.pageNumber}
+            </div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Packet artifact</div>
-            <div className="metric-value">{telemetry.packetArtifact.artifactStatus}</div>
+            <div className="metric-label">Body blocks</div>
+            <div className="metric-value">{telemetry.packetDetailView.bodyBlocks.length}</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Delivery entries</div>
-            <div className="metric-value">{telemetry.deliveryLog.length}</div>
+            <div className="metric-label">Label placements</div>
+            <div className="metric-value">{telemetry.packetDetailView.labelPlacements.length}</div>
           </div>
 
           <div className="metric-card">
-            <div className="metric-label">Archive entries</div>
-            <div className="metric-value">{telemetry.archiveEntries.length}</div>
+            <div className="metric-label">PDF model</div>
+            <div className="metric-value">{telemetry.packetDetailView.pdfModel.renderStatus}</div>
           </div>
         </div>
       </section>
@@ -98,9 +101,9 @@ export default function PartnerTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Packet Artifact</h2>
+            <h2>Floor-Plan Page Selection</h2>
             <p className="muted">
-              The packet is the front door, not the whole house. This artifact shell prepares the packet for future PDF generation and delivery.
+              Packet composition now chooses the floor-plan page deterministically before any future PDF generation.
             </p>
           </div>
         </div>
@@ -108,13 +111,11 @@ export default function PartnerTelemetryPage() {
         <div className="output-detail-stack">
           <div className="output-detail-card">
             <div className="detail-card-top">
-              <strong>{telemetry.packetArtifact.artifactType}</strong>
-              <span className="qty-chip">{telemetry.packetArtifact.packetStatus}</span>
+              <strong>{telemetry.packetDetailView.pageSelection.floorLabel}</strong>
+              <span className="qty-chip">Page {telemetry.packetDetailView.pageSelection.pageNumber}</span>
             </div>
-            <p><strong>Artifact ID:</strong> {telemetry.packetArtifact.artifactId}</p>
-            <p><strong>Viewer mode:</strong> {telemetry.packetArtifact.viewerMode}</p>
-            <p><strong>Return path:</strong> {telemetry.packetArtifact.returnPath}</p>
-            <p><strong>Archive storage:</strong> {telemetry.packetArtifact.archiveStorage}</p>
+            <p>{telemetry.packetDetailView.pageSelection.selectionReason}</p>
+            <p>{telemetry.packetDetailView.pageSelection.fallbackPolicy}</p>
           </div>
         </div>
       </section>
@@ -122,22 +123,28 @@ export default function PartnerTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Delivery Log Shell</h2>
+            <h2>Packet Body Composition</h2>
             <p className="muted">
-              Deterministic recipient records come first. Live delivery behavior comes in the next layer.
+              These blocks define the deterministic reading order of the incident packet body.
             </p>
           </div>
         </div>
 
-        <div className="bullet-list">
-          {telemetry.deliveryLog.map((entry, index) => (
-            <div className="list-card" key={`${entry.recipientRole}-${index}`}>
-              <strong>{entry.recipientRole}</strong>
-              <div>{entry.recipientName}</div>
-              <div>{entry.deliveryChannel}</div>
-              <div>{entry.deliveryStatus}</div>
-              <div>{entry.deliveryTimestamp}</div>
-              <div>{entry.note}</div>
+        <div className="output-detail-stack">
+          {telemetry.packetDetailView.bodyBlocks.map((block, index) => (
+            <div className="output-detail-card" key={`${block.blockId}-${index}`}>
+              <div className="detail-card-top">
+                <strong>{block.title}</strong>
+                <span className="qty-chip">{block.priority}</span>
+              </div>
+              <p><strong>Content type:</strong> {block.contentType}</p>
+              <div className="bullet-list">
+                {block.includedFields.map((item, itemIndex) => (
+                  <div className="list-card" key={`${item}-${itemIndex}`}>
+                    <div>{item}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -146,20 +153,20 @@ export default function PartnerTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Follow-Up Timeline</h2>
+            <h2>Label Placement Rules</h2>
             <p className="muted">
-              The packet must return recipients into IQR and preserve continuity after the first alert moment.
+              Source labels, point codes, and legend placement all stay deterministic and non-ornamental.
             </p>
           </div>
         </div>
 
         <div className="bullet-list">
-          {telemetry.followUpTimeline.map((entry, index) => (
-            <div className="list-card" key={`${entry.status}-${index}`}>
-              <strong>{entry.status}</strong>
-              <div>{entry.owner}</div>
-              <div>{entry.note}</div>
-              <div>{entry.timestamp}</div>
+          {telemetry.packetDetailView.labelPlacements.map((placement, index) => (
+            <div className="list-card" key={`${placement.placementId}-${index}`}>
+              <strong>{placement.labelType}</strong>
+              <div>{placement.targetArea}</div>
+              <div>{placement.placementRule}</div>
+              <div>{placement.purpose}</div>
             </div>
           ))}
         </div>
@@ -168,22 +175,25 @@ export default function PartnerTelemetryPage() {
       <section className="section-card">
         <div className="section-header">
           <div>
-            <h2>Archive Entries</h2>
+            <h2>PDF-Ready Model</h2>
             <p className="muted">
-              Every packet resolves back into the property timeline and keeps continuity over time.
+              This is the content model that prepares the packet for later PDF generation without adding live delivery yet.
             </p>
           </div>
         </div>
 
-        <div className="bullet-list">
-          {telemetry.archiveEntries.map((entry, index) => (
-            <div className="list-card" key={`${entry.entryType}-${index}`}>
-              <strong>{entry.entryType}</strong>
-              <div>{entry.status}</div>
-              <div>{entry.linkedSurface}</div>
-              <div>{entry.note}</div>
+        <div className="output-detail-stack">
+          <div className="output-detail-card">
+            <div className="detail-card-top">
+              <strong>{telemetry.packetDetailView.pdfModel.documentTitle}</strong>
+              <span className="qty-chip">{telemetry.packetDetailView.pdfModel.pageSize}</span>
             </div>
-          ))}
+            <p><strong>Orientation:</strong> {telemetry.packetDetailView.pdfModel.orientation}</p>
+            <p><strong>Include legend:</strong> {telemetry.packetDetailView.pdfModel.includeLegend ? "Yes" : "No"}</p>
+            <p><strong>Include action summary:</strong> {telemetry.packetDetailView.pdfModel.includeActionSummary ? "Yes" : "No"}</p>
+            <p><strong>Include return path:</strong> {telemetry.packetDetailView.pdfModel.includeReturnPath ? "Yes" : "No"}</p>
+            <p><strong>Status:</strong> {telemetry.packetDetailView.pdfModel.renderStatus}</p>
+          </div>
         </div>
       </section>
     </main>

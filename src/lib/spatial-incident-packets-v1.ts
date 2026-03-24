@@ -144,6 +144,46 @@ export type IncidentArchiveEntryV1 = {
   note: string;
 };
 
+export type PacketDetailPageSelectionV1 = {
+  floorLabel: string;
+  pageNumber: number;
+  selectionReason: string;
+  fallbackPolicy: string;
+};
+
+export type PacketBodyBlockV1 = {
+  blockId: string;
+  title: string;
+  priority: "High" | "Medium" | "Low";
+  contentType: string;
+  includedFields: string[];
+};
+
+export type PacketLabelPlacementV1 = {
+  placementId: string;
+  labelType: string;
+  targetArea: string;
+  placementRule: string;
+  purpose: string;
+};
+
+export type PdfReadyPacketModelV1 = {
+  documentTitle: string;
+  pageSize: string;
+  orientation: string;
+  includeLegend: boolean;
+  includeActionSummary: boolean;
+  includeReturnPath: boolean;
+  renderStatus: string;
+};
+
+export type PacketDetailViewV1 = {
+  pageSelection: PacketDetailPageSelectionV1;
+  bodyBlocks: PacketBodyBlockV1[];
+  labelPlacements: PacketLabelPlacementV1[];
+  pdfModel: PdfReadyPacketModelV1;
+};
+
 export type SpatialIncidentTelemetryModelV1 = {
   propertyId: string;
   propertyName: string;
@@ -161,6 +201,7 @@ export type SpatialIncidentTelemetryModelV1 = {
   deliveryLog: IncidentDeliveryRecordV1[];
   followUpTimeline: IncidentFollowUpNoteV1[];
   archiveEntries: IncidentArchiveEntryV1[];
+  packetDetailView: PacketDetailViewV1;
   returnPaths: {
     workspace: string;
     outputs: string;
@@ -601,10 +642,142 @@ function buildArchiveEntries(
   ];
 }
 
+function buildPageSelection(
+  incident: SpatialIncidentObjectV1,
+  pages: FloorPlanPageV1[],
+): PacketDetailPageSelectionV1 {
+  const matchedPage =
+    pages.find((page) => page.floorLabel === incident.floor) ?? pages[0];
+
+  return {
+    floorLabel: matchedPage.floorLabel,
+    pageNumber: matchedPage.pageNumber,
+    selectionReason:
+      matchedPage.floorLabel === incident.floor
+        ? "Selected the floor-plan page that matches the incident floor."
+        : "Used the first available page as the deterministic fallback.",
+    fallbackPolicy:
+      "If no direct floor match exists, use the first available mapped page until onboarding confirmation improves coverage.",
+  };
+}
+
+function buildBodyBlocks(): PacketBodyBlockV1[] {
+  return [
+    {
+      blockId: "packet-header",
+      title: "Packet Header",
+      priority: "High",
+      contentType: "Identity + incident context",
+      includedFields: [
+        "Property name",
+        "Street address",
+        "Event type",
+        "Timestamp",
+        "Severity",
+      ],
+    },
+    {
+      blockId: "overlay-panel",
+      title: "Overlay Panel",
+      priority: "High",
+      contentType: "Floor-plan page with deterministic overlay",
+      includedFields: [
+        "Selected floor-plan page",
+        "Overlay zones",
+        "Protection-point marker",
+        "Source label",
+      ],
+    },
+    {
+      blockId: "legend-panel",
+      title: "Legend + Labels",
+      priority: "Medium",
+      contentType: "Interpretation support",
+      includedFields: [
+        "Color legend",
+        "Source system label",
+        "Protection-point code",
+      ],
+    },
+    {
+      blockId: "action-panel",
+      title: "Action + Return Path",
+      priority: "High",
+      contentType: "Operational next step",
+      includedFields: [
+        "Action summary",
+        "Return path",
+        "Archive note",
+      ],
+    },
+  ];
+}
+
+function buildLabelPlacements(
+  incident: SpatialIncidentObjectV1,
+  renderModel: SpatialIncidentRenderModelV1,
+): PacketLabelPlacementV1[] {
+  return [
+    {
+      placementId: "label-source",
+      labelType: "Source label",
+      targetArea: renderModel.overlayZones[0].zoneId,
+      placementRule:
+        "Place the source label nearest the active protection point without obscuring the marker.",
+      purpose: `Identify the upstream source for ${incident.eventType}.`,
+    },
+    {
+      placementId: "label-protection-point",
+      labelType: "Protection-point code",
+      targetArea: renderModel.overlayZones[0].zoneId,
+      placementRule:
+        "Place the protection-point code directly adjacent to the active marker.",
+      purpose: "Tie the packet visually to the mapped protection point record.",
+    },
+    {
+      placementId: "label-legend",
+      labelType: "Legend block",
+      targetArea: "Packet side rail or bottom panel",
+      placementRule:
+        "Keep the legend in a stable non-overlapping location on every packet.",
+      purpose: "Preserve fast comprehension and deterministic reading order.",
+    },
+  ];
+}
+
+function buildPdfModel(
+  propertyName: string,
+  packetTitle: string,
+): PdfReadyPacketModelV1 {
+  return {
+    documentTitle: `${propertyName} — ${packetTitle}`,
+    pageSize: "Letter",
+    orientation: "Portrait",
+    includeLegend: true,
+    includeActionSummary: true,
+    includeReturnPath: true,
+    renderStatus: "PDF-ready content model prepared for future generation layer",
+  };
+}
+
+function buildPacketDetailView(
+  incident: SpatialIncidentObjectV1,
+  floorPlanPages: FloorPlanPageV1[],
+  renderModel: SpatialIncidentRenderModelV1,
+): PacketDetailViewV1 {
+  return {
+    pageSelection: buildPageSelection(incident, floorPlanPages),
+    bodyBlocks: buildBodyBlocks(),
+    labelPlacements: buildLabelPlacements(incident, renderModel),
+    pdfModel: buildPdfModel(incident.propertyName, renderModel.packetTitle),
+  };
+}
+
 export function buildSpatialIncidentTelemetryModel(
   state: QuestionnaireStateV1,
 ): SpatialIncidentTelemetryModelV1 {
   const workspace = buildPropertyWorkspace(state);
+  const floorPlanPages = buildFloorPlanPages();
   const mappings = buildProtectionPointMappings(state);
   const sampleIncident = buildSampleIncident(
     workspace.propertyId,
@@ -614,6 +787,7 @@ export function buildSpatialIncidentTelemetryModel(
   );
   const samplePacket = buildSamplePacket();
   const recipients = buildRecipients(state);
+  const renderModel = buildRenderModel(sampleIncident, mappings, samplePacket);
 
   return {
     propertyId: workspace.propertyId,
@@ -622,16 +796,21 @@ export function buildSpatialIncidentTelemetryModel(
     currentStatus: workspace.currentStatus,
     requiredInputs: buildRequiredInputs(),
     floorPlanMaster: buildFloorPlanMaster(),
-    floorPlanPages: buildFloorPlanPages(),
+    floorPlanPages,
     protectionPointMappings: mappings,
     recipients,
     sampleIncident,
     samplePacket,
-    renderModel: buildRenderModel(sampleIncident, mappings, samplePacket),
+    renderModel,
     packetArtifact: buildPacketArtifact(workspace.propertyId, samplePacket),
     deliveryLog: buildDeliveryLog(recipients),
     followUpTimeline: buildFollowUpTimeline(workspace.propertyName),
     archiveEntries: buildArchiveEntries(samplePacket),
+    packetDetailView: buildPacketDetailView(
+      sampleIncident,
+      floorPlanPages,
+      renderModel,
+    ),
     returnPaths: {
       workspace: "/partner/workspace",
       outputs: "/partner/outputs",

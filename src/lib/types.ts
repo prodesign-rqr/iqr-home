@@ -39,7 +39,61 @@ export type QueryIntent =
   | "risk_profile_summary"
   | "timeline_summary"
   | "event_by_date";
- 
+
+export type TruthStatus = "Verified" | "Reported" | "Inferred" | "Missing" | "Blocked";
+
+export type BlockerType =
+  | "missing_source"
+  | "missing_verification"
+  | "missing_linkage"
+  | "missing_context"
+  | "conflicting_record"
+  | "awaiting_update"
+  | "restricted_access";
+
+export interface TruthResolution {
+  truthStatus: TruthStatus;
+  blockerType?: BlockerType;
+  blockerReason?: string;
+  nextActionText?: string;
+  evidenceLabel?: string;
+  lastVerifiedAt?: string;
+}
+
+export interface SectionIntegrityRollup {
+  verifiedCount: number;
+  reportedOrInferredCount: number;
+  missingCount: number;
+  blockedCount: number;
+  summary: string;
+  nextActionText?: string;
+}
+
+export interface TelemetryTile {
+  label: string;
+  value: string;
+  meta?: string;
+  truth: TruthResolution;
+}
+
+export interface PreventionCardItem {
+  title: string;
+  location?: string;
+  details: Array<{
+    label: string;
+    value: string;
+  }>;
+  truth: TruthResolution;
+}
+
+export interface TruthListItem {
+  id: string;
+  title: string;
+  description?: string;
+  meta?: string;
+  truth: TruthResolution;
+}
+
 export interface PropertyRecord {
   property_record: {
     id: string;
@@ -70,7 +124,7 @@ export interface PropertyRecord {
   };
   attentionItems: AttentionItem[];
 }
- 
+
 export interface SystemRecord {
   id: string;
   name: string;
@@ -84,7 +138,7 @@ export interface SystemRecord {
   service_history?: ServiceEvent[];
   replacement_history?: TimelineEvent[];
 }
- 
+
 export interface DeviceRecord {
   id: string;
   device_type: string;
@@ -98,7 +152,7 @@ export interface DeviceRecord {
   install_date?: string;
   last_verified?: string;
 }
- 
+
 export interface WaterRiskPoint {
   id: string;
   fixture_name: string;
@@ -109,7 +163,7 @@ export interface WaterRiskPoint {
   last_verified: string;
   notes?: string;
 }
- 
+
 export interface EnvironmentalMonitoringZone {
   id: string;
   zone_name: string;
@@ -119,7 +173,7 @@ export interface EnvironmentalMonitoringZone {
   last_verified: string;
   alert_thresholds?: string;
 }
- 
+
 export interface MitigationVerification {
   id: string;
   device_type: string;
@@ -129,7 +183,7 @@ export interface MitigationVerification {
   last_verified: string;
   status: string;
 }
- 
+
 export interface ServiceEvent {
   event_id: string;
   date: string;
@@ -139,13 +193,13 @@ export interface ServiceEvent {
   summary: string;
   documents?: string[];
 }
- 
+
 export interface YearlyUpdate {
   date: string;
   summary: string;
   verification_status: string;
 }
- 
+
 export interface TimelineEvent {
   id: string;
   date: string;
@@ -153,7 +207,7 @@ export interface TimelineEvent {
   description: string;
   linked_system_id?: string;
 }
- 
+
 export interface IssueItem {
   id: string;
   title: string;
@@ -163,7 +217,7 @@ export interface IssueItem {
   created_date: string;
   last_reviewed: string;
 }
- 
+
 export interface AttentionItem {
   id: string;
   title: string;

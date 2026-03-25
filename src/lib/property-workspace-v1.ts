@@ -1,6 +1,12 @@
 import { buildOutputSummary, buildTagItems } from "./output-mappers-v1";
 import { buildOnboardingProperty } from "./onboarding-pipeline-v1";
 import type { QuestionnaireStateV1 } from "./questionnaire-state-v1";
+import type {
+  BlockerType,
+  SectionIntegrityRollup,
+  TruthResolution,
+  TruthStatus,
+} from "./types";
 
 export type PropertyWorkspaceParticipant = {
   name: string;
@@ -26,6 +32,25 @@ export type PropertyWorkspaceRoleView = {
   focus: string;
 };
 
+export type TruthInput = {
+  verification?: string;
+  status?: string;
+  hasEvidence?: boolean;
+  lastVerifiedAt?: string;
+  missing?: boolean;
+  blocked?: boolean;
+  blockerType?: BlockerType;
+  blockerReason?: string;
+  nextActionText?: string;
+  reported?: boolean;
+  inferred?: boolean;
+  conflicting?: boolean;
+  linkageMissing?: boolean;
+  contextMissing?: boolean;
+  stale?: boolean;
+  restricted?: boolean;
+};
+
 export type PropertyWorkspaceV1 = {
   propertyId: string;
   propertyName: string;
@@ -46,6 +71,183 @@ export type PropertyWorkspaceV1 = {
 
 function text(value: string | undefined, fallback = ""): string {
   return value && value.trim() ? value.trim() : fallback;
+}
+
+function normalize(value?: string): string {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function blockerReasonFor(type?: BlockerType): string | undefined {
+  switch (type) {
+    case "missing_source":
+      return "Supporting source is missing.";
+    case "missing_verification":
+      return "Recorded information still needs verification.";
+    case "missing_linkage":
+      return "Related record linkage is incomplete.";
+    case "missing_context":
+      return "Operational context is too thin to trust.";
+    case "conflicting_record":
+      return "Conflicting record state needs resolution.";
+    case "awaiting_update":
+      return "Review or update cadence has gone stale.";
+    case "restricted_access":
+      return "Required supporting material is not accessible.";
+    default:
+      return undefined;
+  }
+}
+
+function nextActionFor(type?: BlockerType): string | undefined {
+  switch (type) {
+    case "missing_source":
+      return "Add supporting file, photo, or source.";
+    case "missing_verification":
+      return "Verify recorded information.";
+    case "missing_linkage":
+      return "Link related record or event.";
+    case "missing_context":
+      return "Add operational detail.";
+    case "conflicting_record":
+      return "Resolve record conflict.";
+    case "awaiting_update":
+      return "Complete review or update.";
+    case "restricted_access":
+      return "Restore or request access.";
+    default:
+      return undefined;
+  }
+}
+
+export function resolveTruth(input: TruthInput): TruthResolution {
+  const verification = normalize(input.verification);
+  const status = normalize(input.status);
+
+  const blockerType: BlockerType | undefined =
+    input.blockerType ??
+    (input.conflicting
+      ? "conflicting_record"
+      : input.linkageMissing
+      ? "missing_linkage"
+      : input.contextMissing
+      ? "missing_context"
+      : input.stale
+      ? "awaiting_update"
+      : input.restricted
+      ? "restricted_access"
+      : input.blocked
+      ? "missing_verification"
+      : undefined);
+
+  if (input.missing || (!verification && !status && !input.hasEvidence && !blockerType)) {
+    return {
+      truthStatus: "Missing",
+      blockerReason: input.blockerReason ?? "Required information is missing.",
+      nextActionText: input.nextActionText ?? "Add the missing information.",
+      evidenceLabel: input.hasEvidence ? "Evidence present" : undefined,
+      lastVerifiedAt: input.lastVerifiedAt,
+    };
+  }
+
+  if (blockerType) {
+    return {
+      truthStatus: "Blocked",
+      blockerType,
+      blockerReason: input.blockerReason ?? blockerReasonFor(blockerType),
+      nextActionText: input.nextActionText ?? nextActionFor(blockerType),
+      evidenceLabel: input.hasEvidence ? "Evidence present" : undefined,
+      lastVerifiedAt: input.lastVerifiedAt,
+    };
+  }
+
+  if (input.inferred) {
+    return {
+      truthStatus: "Inferred",
+      blockerReason: "Derived from linked record context.",
+      evidenceLabel: input.hasEvidence ? "Evidence present" : undefined,
+      lastVerifiedAt: input.lastVerifiedAt,
+    };
+  }
+
+  if (
+    verification === "verified" ||
+    verification === "complete" ||
+    verification === "confirmed" ||
+    status === "verified" ||
+    status === "active" ||
+    status === "ready" ||
+    status === "complete" ||
+    status === "stable" ||
+    status === "protected"
+  ) {
+    return {
+      truthStatus: "Verified",
+      evidenceLabel: input.hasEvidence ? "Evidence present" : "Verified state",
+      lastVerifiedAt: input.lastVerifiedAt,
+    };
+  }
+
+  if (
+    input.reported ||
+    verification === "reported" ||
+    verification === "pending" ||
+    verification === "needs review" ||
+    verification === "review" ||
+    status === "reported" ||
+    status === "pending" ||
+    status === "watch" ||
+    status === "open"
+  ) {
+    return {
+      truthStatus: "Reported",
+      blockerReason: "Present in the record but not yet verified.",
+      nextActionText: "Verify recorded information.",
+      evidenceLabel: input.hasEvidence ? "Evidence present" : undefined,
+      lastVerifiedAt: input.lastVerifiedAt,
+    };
+  }
+
+  return {
+    truthStatus: "Reported",
+    blockerReason: "Present in the record but not yet normalized.",
+    nextActionText: "Review and verify the recorded state.",
+    evidenceLabel: input.hasEvidence ? "Evidence present" : undefined,
+    lastVerifiedAt: input.lastVerifiedAt,
+  };
+}
+
+export function buildSectionIntegrityRollup(items: TruthResolution[]): SectionIntegrityRollup {
+  const verifiedCount = items.filter((item) => item.truthStatus === "Verified").length;
+  const reportedOrInferredCount = items.filter(
+    (item) => item.truthStatus === "Reported" || item.truthStatus === "Inferred",
+  ).length;
+  const missingCount = items.filter((item) => item.truthStatus === "Missing").length;
+  const blockedCount = items.filter((item) => item.truthStatus === "Blocked").length;
+
+  const summaryParts: string[] = [];
+  if (verifiedCount) summaryParts.push(`${verifiedCount} verified`);
+  if (reportedOrInferredCount) summaryParts.push(`${reportedOrInferredCount} pending`);
+  if (missingCount) summaryParts.push(`${missingCount} missing`);
+  if (blockedCount) summaryParts.push(`${blockedCount} blocked`);
+
+  const nextActionText =
+    items.find((item) => item.nextActionText)?.nextActionText ??
+    (blockedCount > 0
+      ? "Resolve blockers first."
+      : missingCount > 0
+      ? "Add missing information."
+      : reportedOrInferredCount > 0
+      ? "Verify reported items."
+      : undefined);
+
+  return {
+    verifiedCount,
+    reportedOrInferredCount,
+    missingCount,
+    blockedCount,
+    summary: summaryParts.length ? summaryParts.join(" • ") : "No items surfaced",
+    nextActionText,
+  };
 }
 
 export function buildPropertyWorkspace(state: QuestionnaireStateV1): PropertyWorkspaceV1 {
@@ -136,7 +338,7 @@ export function buildPropertyWorkspace(state: QuestionnaireStateV1): PropertyWor
     },
     {
       title: "Integrity queue",
-      status: prompts.some((prompt) => prompt.status == "Open") ? "Needs action" : "Stable",
+      status: prompts.some((prompt) => prompt.status === "Open") ? "Needs action" : "Stable",
       detail: "Missing information, unresolved issues, and unverified records become property-specific operational prompts.",
     },
     {
@@ -192,4 +394,3 @@ export function buildPropertyWorkspace(state: QuestionnaireStateV1): PropertyWor
     counterCardReady: outputSummary.counterCardReady,
   };
 }
-

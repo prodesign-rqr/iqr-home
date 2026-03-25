@@ -1,34 +1,30 @@
-import { PropertyRecord } from "../lib/types";
- 
-export default function TelemetryGrid({ record }: { record: PropertyRecord }) {
-  const tiles = [
-    {
-      label: "Inspection Baseline",
-      value: record.inspection_baseline.date,
-      meta: record.inspection_baseline.provider_company
-    },
-    {
-      label: "Mitigation Devices",
-      value: `${record.mitigationDevices.length}`,
-      meta: "Verified prevention points"
-    },
-    {
-      label: "Sensor Signals",
-      value: `${record.devices.length}`,
-      meta: "Structured device records"
-    },
-    {
-      label: "Service Events",
-      value: `${record.serviceEvents.length}`,
-      meta: "Logged service history"
-    },
-    {
-      label: "Yearly Updates",
-      value: record.yearlyUpdate.verification_status,
-      meta: record.yearlyUpdate.date
-    }
-  ];
- 
+import type { TelemetryTile } from "../lib/types";
+
+function truthLine(tile: TelemetryTile): string {
+  if (tile.truth.blockerReason) {
+    return tile.truth.blockerReason;
+  }
+
+  if (tile.truth.evidenceLabel && tile.truth.lastVerifiedAt) {
+    return `${tile.truth.evidenceLabel} | Last verified ${tile.truth.lastVerifiedAt}`;
+  }
+
+  if (tile.truth.evidenceLabel) {
+    return tile.truth.evidenceLabel;
+  }
+
+  if (tile.truth.lastVerifiedAt) {
+    return `Last verified ${tile.truth.lastVerifiedAt}`;
+  }
+
+  if (tile.truth.nextActionText) {
+    return tile.truth.nextActionText;
+  }
+
+  return "No additional context";
+}
+
+export default function TelemetryGrid({ tiles }: { tiles: TelemetryTile[] }) {
   return (
     <div className="telemetry-grid">
       {tiles.map((tile) => (
@@ -36,6 +32,12 @@ export default function TelemetryGrid({ record }: { record: PropertyRecord }) {
           <div className="label">{tile.label}</div>
           <div className="value">{tile.value}</div>
           <div className="meta">{tile.meta}</div>
+          <div className="muted small" style={{ marginTop: 6 }}>
+            <span className="status-pill">{tile.truth.truthStatus}</span>
+          </div>
+          <div className="muted small" style={{ marginTop: 6 }}>
+            {truthLine(tile)}
+          </div>
         </div>
       ))}
     </div>

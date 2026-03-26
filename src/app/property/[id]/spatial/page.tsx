@@ -1,5 +1,16 @@
-export default function SpatialPage() {
-  const propertyId = "test"
+type SpatialPageProps = {
+  params: Promise<{ id: string }>
+  searchParams?: Promise<{ point?: string }>
+}
+
+export default async function SpatialPage({
+  params,
+  searchParams,
+}: SpatialPageProps) {
+  const { id } = await params
+  const resolvedSearchParams = searchParams ? await searchParams : undefined
+  const requestedPointId = resolvedSearchParams?.point
+
   const floorPlanStatus = "Loaded"
   const mappedAreas = 6
   const protectionPoints = 12
@@ -51,7 +62,8 @@ export default function SpatialPage() {
     },
   ]
 
-  const selectedPoint = points[0]
+  const selectedPoint =
+    points.find((point) => point.id === requestedPointId) ?? points[0]
 
   return (
     <main
@@ -96,7 +108,7 @@ export default function SpatialPage() {
             }}
           >
             <div style={{ opacity: 0.65, fontSize: "0.9rem" }}>Property ID</div>
-            <div style={{ fontSize: "1.2rem", marginTop: "8px" }}>{propertyId}</div>
+            <div style={{ fontSize: "1.2rem", marginTop: "8px" }}>{id}</div>
           </div>
 
           <div
@@ -165,8 +177,9 @@ export default function SpatialPage() {
               }}
             >
               {points.map((point) => (
-                <div
+                <a
                   key={point.id}
+                  href={`/property/${id}/spatial?point=${point.id}`}
                   style={{
                     position: "absolute",
                     top: point.top,
@@ -176,6 +189,8 @@ export default function SpatialPage() {
                     flexDirection: "column",
                     alignItems: "center",
                     gap: "8px",
+                    textDecoration: "none",
+                    color: "#fff",
                   }}
                 >
                   <div
@@ -209,7 +224,7 @@ export default function SpatialPage() {
                   >
                     {point.label}
                   </div>
-                </div>
+                </a>
               ))}
 
               <div

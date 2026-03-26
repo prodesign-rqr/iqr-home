@@ -234,7 +234,7 @@ export function buildSectionIntegrityRollup(items: TruthResolution[]): SectionIn
 }
 
 function toFloorPlanDocument(
-  doc: NonNullable<StructuredHouseRecordV11["spatial"]>["floorPlanDocuments"][number]
+  doc: any
 ): FloorPlanDocument {
   return {
     id: doc.id,

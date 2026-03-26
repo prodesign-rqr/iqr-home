@@ -29,11 +29,14 @@ export default function HomePage() {
           spatial record. The old section-first views remain available as secondary reference paths.
         </p>
 
-        <div className="subpage-nav">
-          <Link href="/partner/workspace" className="subpage-nav-home">
-            Open Spatial Workspace
-          </Link>
-          <div className="subpage-nav-links">
+<div className="subpage-nav">
+  <Link href="/partner/workspace" className="subpage-nav-home">
+    Open Spatial Workspace
+  </Link>
+  <a href="/property/test/spatial" style={{ color: "#0af" }}>
+    Open Spatial Test
+  </a>
+           <div className="subpage-nav-links">
             <Link href="/telemetry" className="subnav-pill">Telemetry</Link>
             <Link href="/prevention" className="subnav-pill">Prevention</Link>
             <Link href="/service-events" className="subnav-pill">Service Events</Link>

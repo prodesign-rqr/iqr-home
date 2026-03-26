@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { SectionIntegrityRollup } from "../lib/types";
 
 export default function SectionCard({
@@ -9,8 +10,8 @@ export default function SectionCard({
 }: {
   title: string;
   subtitle?: string;
-  children: React.ReactNode;
-  right?: React.ReactNode;
+  children: ReactNode;
+  right?: ReactNode;
   rollup?: SectionIntegrityRollup;
 }) {
   return (
@@ -20,13 +21,13 @@ export default function SectionCard({
           <h2>{title}</h2>
           {subtitle ? <p>{subtitle}</p> : null}
           {rollup ? (
-            <p className="muted small" style={{ marginTop: 6 }}>
+            <p className="muted small">
               {rollup.summary}
               {rollup.nextActionText ? ` | Next: ${rollup.nextActionText}` : ""}
             </p>
           ) : null}
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="section-title-right">
           {rollup ? (
             <>
               <span className="status-pill">Verified {rollup.verifiedCount}</span>

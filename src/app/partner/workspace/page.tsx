@@ -1,23 +1,28 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import {
-  loadQuestionnaireStateV1,
-  type QuestionnaireStateV1,
-} from "../../../lib/questionnaire-state-v1";
-import { buildPropertyWorkspace } from "../../../lib/property-workspace-v1";
+import SectionCard from "../../../components/SectionCard";
+import { mockRecord } from "../../../lib/mock-record";
+import { buildPropertyWorkspace, buildSpatialPropertyShell } from "../../../lib/property-workspace-v1";
 
 export default function PartnerWorkspacePage() {
-  const [state, setState] = useState<QuestionnaireStateV1 | null>(null);
+  const workspace = buildPropertyWorkspace({
+    propertyBasics: {
+      propertyNickname: "Anonymized Desert Residence",
+      streetAddress: mockRecord.property.streetAddress,
+      parcelApn: mockRecord.property.parcelApn,
+      city: mockRecord.property.city ?? "",
+      state: mockRecord.property.state ?? "",
+      zip: mockRecord.property.zip ?? "",
+    },
+    peopleRoles: {
+      clientOwner: "Client / owner held privately",
+      propertyManager: "Property manager assigned",
+      tisOwner: "Integrator owner assigned",
+    },
+  } as any);
 
-  useEffect(() => {
-    setState(loadQuestionnaireStateV1());
-  }, []);
-
-  const currentState = state ?? loadQuestionnaireStateV1();
-  const workspace = useMemo(() => buildPropertyWorkspace(currentState), [currentState]);
+  const shell = buildSpatialPropertyShell(mockRecord);
+  const selected = shell.selectedAreaContext;
 
   return (
     <main>
@@ -32,204 +37,91 @@ export default function PartnerWorkspacePage() {
             priority
           />
         </div>
-
-        <h1>Property Workspace</h1>
+        <h1>Partner Spatial Workspace</h1>
         <p>
-          Property-centered operating environment for onboarding, continuity, field execution,
-          integrity prompts, and startup-packet visibility.
+          The partner workspace now carries a map-first property baseline while preserving the existing
+          prompts, participants, and startup-output posture.
         </p>
 
         <div className="subpage-nav">
           <Link href="/" className="subpage-nav-home">
             Back to Home
           </Link>
-
           <div className="subpage-nav-links">
-            <Link href="/partner" className="subnav-pill">
-              Partner Entry
-            </Link>
-            <span className="subnav-pill current">Property Workspace</span>
-            <Link href="/partner/questionnaire" className="subnav-pill">
-              Questionnaire
-            </Link>
-            <Link href="/partner/outputs" className="subnav-pill">
-              Startup Outputs
-            </Link>
-            <Link href="/hq" className="subnav-pill">
-              HQ Admin
-            </Link>
+            <Link href="/partner" className="subnav-pill">Partner Entry</Link>
+            <Link href="/partner/questionnaire" className="subnav-pill">Questionnaire</Link>
+            <Link href="/partner/outputs/property-record-shell" className="subnav-pill">Property Record Shell</Link>
+            <Link href="/telemetry" className="subnav-pill">System Index</Link>
           </div>
         </div>
       </section>
 
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Property Anchor</h2>
-            <p className="muted">
-              The property is the permanent center of gravity. People and workflow attach to it.
-            </p>
-          </div>
-          <div className="status-pill">{workspace.currentStatus}</div>
-        </div>
-
-        <div className="grid two-col">
-          <div className="metric-card">
-            <div className="metric-label">Property</div>
-            <div className="metric-value">{workspace.propertyName}</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Property ID</div>
-            <div className="metric-value">{workspace.propertyId}</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Street address</div>
-            <div className="metric-value">{workspace.streetAddress}</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Parcel / APN</div>
-            <div className="metric-value">{workspace.parcelApn}</div>
-          </div>
-        </div>
-
-        <div className="list-card">
-          <strong>Next action</strong>
-          <div>{workspace.nextAction}</div>
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Workspace Metrics</h2>
-            <p className="muted">
-              Derived counts that help the property explain where it stands operationally.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid two-col">
-          <div className="metric-card">
-            <div className="metric-label">QR plan items</div>
-            <div className="metric-value">{workspace.qrPlanCount}</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Startup kit items</div>
-            <div className="metric-value">{workspace.startupKitCount}</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Property shell blocks</div>
-            <div className="metric-value">{workspace.propertyShellCount}</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Field tasks</div>
-            <div className="metric-value">{workspace.checklistCount}</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Counter Card</div>
-            <div className="metric-value">
-              {workspace.counterCardReady ? "Ready" : "Needs attention"}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Action Prompts</h2>
-            <p className="muted">
-              Property-specific operational prompts, not generic task-management clutter.
-            </p>
-          </div>
-        </div>
-
+      <SectionCard title="Workspace Status" subtitle="Compatibility-safe bridge between the current workspace and the spatial shell.">
         <div className="bullet-list">
-          {workspace.prompts.map((prompt, index) => (
-            <div className="list-card" key={`${prompt.title}-${index}`}>
-              <strong>{prompt.title}</strong>
-              <div>{prompt.owner}</div>
-              <div>{prompt.status}</div>
-              <div>{prompt.detail}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Participants + Role Views</h2>
-            <p className="muted">
-              Humans and organizations remain attached to the property record as stewardship participants.
-            </p>
+          <div className="list-card">
+            <strong>{workspace.propertyName}</strong>
+            <div>{workspace.streetAddress}</div>
+            <div className="muted small">{workspace.parcelApn}</div>
+            <div className="muted small">Status: {workspace.currentStatus}</div>
+            <div className="muted small">Next: {workspace.nextAction}</div>
+          </div>
+          <div className="list-card">
+            <strong>Startup output posture</strong>
+            <div className="muted small">QR plan items: {workspace.qrPlanCount}</div>
+            <div className="muted small">Startup kit count: {workspace.startupKitCount}</div>
+            <div className="muted small">Property shell count: {workspace.propertyShellCount}</div>
+            <div className="muted small">Checklist count: {workspace.checklistCount}</div>
           </div>
         </div>
+      </SectionCard>
 
-        <div className="output-detail-stack">
-          <div className="output-detail-card">
-            <div className="detail-card-top">
-              <strong>Participants</strong>
-              <span className="qty-chip">{workspace.participants.length}</span>
-            </div>
-            <div className="bullet-list">
-              {workspace.participants.map((participant, index) => (
-                <div className="list-card" key={`${participant.role}-${index}`}>
-                  <strong>{participant.role}</strong>
-                  <div>{participant.name}</div>
-                  <div>{participant.status}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="output-detail-card">
-            <div className="detail-card-top">
-              <strong>Role Views</strong>
-              <span className="qty-chip">{workspace.roleViews.length}</span>
-            </div>
-            <div className="bullet-list">
-              {workspace.roleViews.map((view, index) => (
-                <div className="list-card" key={`${view.role}-${index}`}>
-                  <strong>{view.role}</strong>
-                  <div>{view.focus}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Operational Modules</h2>
-            <p className="muted">
-              First-pass architecture for onboarding, integrity, document collection, field execution, and Slack prompts.
-            </p>
-          </div>
-        </div>
-
-        <div className="output-detail-stack">
-          {workspace.modules.map((module, index) => (
-            <div className="output-detail-card" key={`${module.title}-${index}`}>
-              <div className="detail-card-top">
-                <strong>{module.title}</strong>
-                <span className="qty-chip">{module.status}</span>
+      <SectionCard title="Spatial Property Baseline" subtitle="Map-first shell layered under the existing partner workspace.">
+        <div className="bullet-list">
+          <div className="list-card">
+            <strong>Mapped floors</strong>
+            {shell.property.floors.map((floor) => (
+              <div className="muted small" key={floor.id}>
+                {floor.label} • {floor.areas.length} areas
               </div>
-              <p>{module.detail}</p>
+            ))}
+          </div>
+          <div className="list-card">
+            <strong>Floor plan documents</strong>
+            <div className="muted small">Master plans: {shell.masterFloorPlans.length}</div>
+            <div className="muted small">Derived copies: {shell.derivedFloorPlans.length}</div>
+          </div>
+          <div className="list-card">
+            <strong>Selected area</strong>
+            {selected ? (
+              <>
+                <div>{selected.label}</div>
+                <div className="muted small">{selected.detailSummary}</div>
+              </>
+            ) : (
+              <div className="muted small">No selected area context yet.</div>
+            )}
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Participants and Prompts" subtitle="Existing workspace contract remains intact.">
+        <div className="bullet-list">
+          {workspace.participants.map((participant) => (
+            <div className="list-card" key={participant.role}>
+              <strong>{participant.role}</strong>
+              <div>{participant.name}</div>
+              <div className="muted small">{participant.status}</div>
+            </div>
+          ))}
+          {workspace.prompts.map((prompt) => (
+            <div className="list-card" key={prompt.title}>
+              <strong>{prompt.title}</strong>
+              <div>{prompt.detail}</div>
+              <div className="muted small">{prompt.owner} • {prompt.status}</div>
             </div>
           ))}
         </div>
-      </section>
+      </SectionCard>
     </main>
   );
 }
-

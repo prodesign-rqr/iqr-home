@@ -1,79 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-
-const primaryRoutes = [
-  {
-    title: "Partner Entry",
-    href: "/partner",
-    tag: "Workspace",
-    detail:
-      "Partner-side intake, startup-packet readiness, and operational handoff into the property workflow.",
-    cta: "Open Partner Entry",
-    buttonClass: "button-primary",
-  },
-  {
-    title: "Questionnaire",
-    href: "/partner/questionnaire",
-    tag: "Intake",
-    detail:
-      "Structured sales intake that builds the house record through mapped answers, controlled inputs, and saved draft flow.",
-    cta: "Open Questionnaire",
-    buttonClass: "button-primary",
-  },
-  {
-    title: "Startup Outputs",
-    href: "/partner/outputs",
-    tag: "Outputs",
-    detail:
-      "Review QR tag planning, startup kit contents, property shell blocks, field checklist items, and Counter Card readiness.",
-    cta: "Open Startup Outputs",
-    buttonClass: "button-primary",
-  },
-  {
-    title: "HQ Admin",
-    href: "/hq",
-    tag: "Oversight",
-    detail:
-      "HQ-side onboarding visibility, status buckets, startup release decisions, and continuity oversight.",
-    cta: "Open HQ Admin",
-    buttonClass: "button-secondary",
-  },
-];
-
-const supportRoutes = [
-  {
-    title: "Guest",
-    href: "/guest",
-    detail: "Public-facing guest lane for permitted access and house-explains-itself guidance.",
-  },
-  {
-    title: "Integrity",
-    href: "/integrity",
-    detail: "Record-integrity layer for missing information, unresolved issues, and verification gaps.",
-  },
-  {
-    title: "Prevention",
-    href: "/prevention",
-    detail: "Proof-of-prevention and risk-mitigation framing for monitored and documented protection points.",
-  },
-  {
-    title: "Service Events",
-    href: "/service-events",
-    detail: "Meaningful service history and continuity events attached to the property record.",
-  },
-  {
-    title: "Telemetry",
-    href: "/telemetry",
-    detail: "Property telemetry and continuity layer centered on meaningful events, not noisy raw streams.",
-  },
-  {
-    title: "Voice",
-    href: "/voice",
-    detail: "Voice lane for structured factual query support against the property record.",
-  },
-];
+import SectionCard from "../components/SectionCard";
+import { mockRecord } from "../lib/mock-record";
+import { buildSpatialPropertyShell } from "../lib/property-workspace-v1";
 
 export default function HomePage() {
+  const shell = buildSpatialPropertyShell(mockRecord);
+  const selected = shell.selectedAreaContext;
+  const floors = shell.property.floors;
+  const exteriorAreas = shell.property.exteriorAreas;
+
   return (
     <main>
       <section className="hero">
@@ -81,110 +17,148 @@ export default function HomePage() {
           <Image
             src="/iqr-home-logo-tight-WonB.png"
             alt="IQR Home"
-            width={150}
-            height={105}
+            width={140}
+            height={98}
             className="subpage-logo"
             priority
           />
         </div>
-
-        <h1>IQR Home</h1>
+        <h1>Spatial Property Record</h1>
         <p>
-          A property-centered operations portal built around continuity, record integrity,
-          field execution, and proof. The property record belongs to the house, not the homeowner.
+          IQR now opens through a property-map-first shell that preserves the house as a
+          spatial record. The old section-first views remain available as secondary reference paths.
         </p>
 
-        <div className="status-pill">Property Telemetry + Continuity Layer</div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Primary Entry Points</h2>
-            <p className="muted">
-              Start here to move from intake to startup outputs and HQ oversight without guesswork.
-            </p>
+        <div className="subpage-nav">
+          <Link href="/partner/workspace" className="subpage-nav-home">
+            Open Spatial Workspace
+          </Link>
+          <div className="subpage-nav-links">
+            <Link href="/telemetry" className="subnav-pill">Telemetry</Link>
+            <Link href="/prevention" className="subnav-pill">Prevention</Link>
+            <Link href="/service-events" className="subnav-pill">Service Events</Link>
+            <Link href="/integrity" className="subnav-pill">Integrity</Link>
+            <Link href="/partner" className="subnav-pill">Partner Entry</Link>
           </div>
         </div>
+      </section>
 
-        <div className="output-detail-stack">
-          {primaryRoutes.map((route) => (
-            <div className="output-detail-card" key={route.href}>
-              <div className="detail-card-top">
-                <strong>{route.title}</strong>
-                <span className="qty-chip">{route.tag}</span>
+      <SectionCard
+        title={shell.propertyName}
+        subtitle="Floor-plan-first shell for the canonical property record."
+        right={<span className="status-pill">Status: {shell.currentStatus}</span>}
+      >
+        <div className="bullet-list">
+          <div className="list-card">
+            <strong>Property anchor</strong>
+            <div>{shell.streetAddress}</div>
+            <div className="muted small">{shell.parcelApn}</div>
+            <div className="muted small">Next: {shell.nextAction}</div>
+          </div>
+          <div className="list-card">
+            <strong>Floor plan documents</strong>
+            <div>{shell.masterFloorPlans.length} master / {shell.derivedFloorPlans.length} derived</div>
+            <div className="muted small">System Index remains available at {shell.systemIndexPath}</div>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Mapped Floors" subtitle="Primary property navigation is now spatially anchored.">
+        <div className="bullet-list">
+          {floors.map((floor) => (
+            <div className="list-card" key={floor.id}>
+              <strong>{floor.label}</strong>
+              <div className="muted small">{floor.areas.length} mapped rooms / zones</div>
+              <div className="detail-card-grid">
+                {floor.areas.map((area) => (
+                  <div className="detail-card" key={area.id}>
+                    <div className="detail-card-top">
+                      <strong>{area.label}</strong>
+                      <span className="status-pill">{area.areaType}</span>
+                    </div>
+                    <div className="muted small">
+                      Docs {area.recordCounts.documents} • Finishes {area.recordCounts.finishes} • Equipment {area.recordCounts.equipment}
+                    </div>
+                    <div className="muted small">
+                      Protection {area.recordCounts.protectionPoints} • Visits {area.recordCounts.visits} • Incidents {area.recordCounts.incidents}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <p>{route.detail}</p>
-              <Link href={route.href} className={`${route.buttonClass} inline-button`}>
-                {route.cta}
-              </Link>
             </div>
           ))}
         </div>
-      </section>
+      </SectionCard>
 
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Operational Backbone</h2>
-            <p className="muted">
-              Questionnaire → Validation → Compilation → Configurator → Startup Outputs →
-              Property Record Shell → Home Kit / Startup Kit → Document Intake →
-              Field Install Plan → On-Site Installation → Record Population →
-              Record Integrity Review → Go Live → Ongoing Stewardship
-            </p>
-          </div>
-        </div>
-
-        <div className="grid two-col">
-          <div className="metric-card">
-            <div className="metric-label">Center of gravity</div>
-            <div className="metric-value">Property record</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Product type</div>
-            <div className="metric-value">Operations portal</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Messaging layer</div>
-            <div className="metric-value">Slack prompt layer</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="metric-label">Source of truth</div>
-            <div className="metric-value">IQR record</div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-card">
-        <div className="section-header">
-          <div>
-            <h2>Secondary Modules</h2>
-            <p className="muted">
-              Supporting routes already in the app and available for the property continuity model.
-            </p>
-          </div>
-        </div>
-
-        <div className="output-detail-stack">
-          {supportRoutes.map((route) => (
-            <div className="output-detail-card" key={route.href}>
+      <SectionCard title="Exterior Areas" subtitle="Exterior and service areas are first-class mapped areas.">
+        <div className="detail-card-grid">
+          {exteriorAreas.map((area) => (
+            <div className="detail-card" key={area.id}>
               <div className="detail-card-top">
-                <strong>{route.title}</strong>
-                <span className="qty-chip">Module</span>
+                <strong>{area.label}</strong>
+                <span className="status-pill">{area.areaType}</span>
               </div>
-              <p>{route.detail}</p>
-              <Link href={route.href} className="button-secondary inline-button">
-                Open {route.title}
-              </Link>
+              <div className="muted small">
+                Docs {area.recordCounts.documents} • Finishes {area.recordCounts.finishes} • Equipment {area.recordCounts.equipment}
+              </div>
             </div>
           ))}
         </div>
-      </section>
+      </SectionCard>
+
+      <SectionCard title="Selected Area Detail" subtitle="Compatibility-safe detail panel foundation for the map shell.">
+        {selected ? (
+          <div className="bullet-list">
+            <div className="list-card">
+              <div className="detail-card-top">
+                <strong>{selected.label}</strong>
+                <span className="status-pill">{selected.areaType}</span>
+              </div>
+              <div className="muted small">{selected.floorLabel ?? "Exterior area"}</div>
+              <div className="muted small">{selected.detailSummary}</div>
+            </div>
+
+            <div className="list-card">
+              <strong>Floor plan documents</strong>
+              {selected.groupedRecords.documents.length ? (
+                selected.groupedRecords.documents.map((doc) => (
+                  <div className="muted small" key={doc.id}>
+                    {doc.title} • {doc.kind} • {doc.versionLabel}
+                  </div>
+                ))
+              ) : (
+                <div className="muted small">No documents attached yet.</div>
+              )}
+            </div>
+
+            <div className="list-card">
+              <strong>Finish history</strong>
+              {selected.groupedRecords.finishes.length ? (
+                selected.groupedRecords.finishes.map((finish) => (
+                  <div className="muted small" key={finish.id}>
+                    {finish.brand} {finish.colorName} • Surface {finish.surfaceId} {finish.current ? "• current" : ""}
+                  </div>
+                ))
+              ) : (
+                <div className="muted small">No finish history attached yet.</div>
+              )}
+            </div>
+
+            <div className="list-card">
+              <strong>Equipment and protection context</strong>
+              <div className="muted small">Equipment: {selected.groupedRecords.equipment.length}</div>
+              <div className="muted small">Protection points: {selected.groupedRecords.protectionPoints.length}</div>
+              <div className="muted small">Incidents: {selected.groupedRecords.incidents.length}</div>
+              <div className="muted small">Visits: {selected.groupedRecords.visits.length}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="list-card">
+            <strong>No selected area yet</strong>
+            <div className="muted small">Spatial shell is present but no mapped area has been promoted into detail context.</div>
+          </div>
+        )}
+      </SectionCard>
     </main>
   );
 }
-

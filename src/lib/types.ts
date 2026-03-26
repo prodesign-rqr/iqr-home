@@ -94,6 +94,107 @@ export interface TruthListItem {
   truth: TruthResolution;
 }
 
+export type FloorPlanDocumentKind = "master" | "derived";
+
+export interface SurfaceReference {
+  id: string;
+  label: string;
+  category: "wall" | "ceiling" | "trim" | "cabinet" | "floor" | "door" | "other";
+}
+
+export interface FloorPlanDocument {
+  id: string;
+  title: string;
+  kind: FloorPlanDocumentKind;
+  floorId?: string;
+  exteriorAreaId?: string;
+  versionLabel: string;
+  sourceDocumentId?: string;
+  fileName: string;
+  note?: string;
+}
+
+export interface SpatialAreaSummary {
+  id: string;
+  label: string;
+  areaType: "room" | "zone" | "exterior";
+  floorId?: string;
+  parentAreaId?: string;
+  recordCounts: {
+    documents: number;
+    finishes: number;
+    equipment: number;
+    protectionPoints: number;
+    visits: number;
+    incidents: number;
+  };
+}
+
+export interface SpatialFinishRecord {
+  id: string;
+  floorId?: string;
+  exteriorAreaId?: string;
+  areaId: string;
+  surfaceId: string;
+  current: boolean;
+  brand: string;
+  productLine?: string;
+  colorName: string;
+  colorCode?: string;
+  sheen?: string;
+  dateApplied?: string;
+  appliedBy?: string;
+  notes?: string;
+}
+
+export interface LocationBoundRecordGroup {
+  documents: FloorPlanDocument[];
+  finishes: SpatialFinishRecord[];
+  equipment: Array<{ id: string; title: string; detail?: string }>;
+  protectionPoints: Array<{ id: string; title: string; detail?: string }>;
+  incidents: Array<{ id: string; title: string; detail?: string }>;
+  visits: Array<{ id: string; title: string; detail?: string }>;
+}
+
+export interface SelectedAreaContext {
+  areaId: string;
+  label: string;
+  areaType: "room" | "zone" | "exterior";
+  floorLabel?: string;
+  detailSummary: string;
+  groupedRecords: LocationBoundRecordGroup;
+}
+
+export interface SpatialProperty {
+  propertyId: string;
+  propertyName: string;
+  streetAddress: string;
+  parcelApn: string;
+  defaultFloorId?: string;
+  floors: Array<{
+    id: string;
+    label: string;
+    areas: SpatialAreaSummary[];
+  }>;
+  exteriorAreas: SpatialAreaSummary[];
+  floorPlanDocuments: FloorPlanDocument[];
+  selectedAreaContext?: SelectedAreaContext;
+}
+
+export interface SpatialPropertyShell {
+  propertyId: string;
+  propertyName: string;
+  streetAddress: string;
+  parcelApn: string;
+  currentStatus: string;
+  nextAction: string;
+  property: SpatialProperty;
+  masterFloorPlans: FloorPlanDocument[];
+  derivedFloorPlans: FloorPlanDocument[];
+  selectedAreaContext?: SelectedAreaContext;
+  systemIndexPath: string;
+}
+
 export interface PropertyRecord {
   property_record: {
     id: string;

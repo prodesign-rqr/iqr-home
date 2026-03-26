@@ -2,22 +2,22 @@ import type { StructuredHouseRecordV11 } from "./schema";
 
 export const mockRecord: StructuredHouseRecordV11 = {
   property: {
-    parcelApn: "217-54-321",
-    iqrPropertyId: "iqr-az-scottsdale-001",
-    streetAddress: "1234 Desert Highlands Drive",
+    parcelApn: "APN-HELD-IN-CANONICAL-RECORD",
+    iqrPropertyId: "iqr-sample-desert-residence-001",
+    streetAddress: "Address held in canonical record",
     city: "Scottsdale",
     state: "AZ",
-    zip: "85255"
+    zip: "85255",
   },
 
   meta: {
     schemaVersion: "1.1",
     createdAt: "2026-03-01T10:00:00Z",
-    updatedAt: "2026-03-14T15:30:00Z",
+    updatedAt: "2026-03-25T15:30:00Z",
     baselineDate: "2026-03-01",
     yearlyUpdateDate: "2026-03-10",
     recordStatus: "active",
-    continuityOwner: "Desert Valley Property Services"
+    continuityOwner: "Partner stewardship team",
   },
 
   summary: {
@@ -25,26 +25,26 @@ export const mockRecord: StructuredHouseRecordV11 = {
       value: "Single-family residence",
       verification: "verified",
       verifiedAt: "2026-03-01",
-      source: "pm-baseline"
+      source: "pm-baseline",
     },
     occupancyType: {
       value: "Second residence",
       verification: "verified",
       verifiedAt: "2026-03-01",
-      source: "pm-baseline"
+      source: "pm-baseline",
     },
     useCase: {
       value: "managed-services-continuity",
       verification: "verified",
       verifiedAt: "2026-03-01",
-      source: "pm-baseline"
+      source: "pm-baseline",
     },
     primaryBuyer: {
       value: "technology-integration-specialist-owner",
       verification: "verified",
       verifiedAt: "2026-03-01",
-      source: "manual"
-    }
+      source: "manual",
+    },
   },
 
   avItInfrastructure: {
@@ -56,11 +56,11 @@ export const mockRecord: StructuredHouseRecordV11 = {
         brand: "Ubiquiti",
         model: "UXG-Pro",
         serialNumber: "UXGPRO-AX-4471",
-        location: "Main AV rack",
+        location: "Garage equipment wall",
         role: "Primary gateway",
         status: "active",
         verification: "verified",
-        notes: "Primary WAN edge for property network."
+        notes: "Primary WAN edge for property network.",
       },
       {
         id: "rack-poe-switch",
@@ -69,10 +69,10 @@ export const mockRecord: StructuredHouseRecordV11 = {
         brand: "Ubiquiti",
         model: "USW-Pro-24-PoE",
         serialNumber: "USW24P-1182",
-        location: "Main AV rack",
+        location: "Garage equipment wall",
         role: "PoE distribution",
         status: "active",
-        verification: "verified"
+        verification: "verified",
       },
       {
         id: "rack-control-processor",
@@ -81,11 +81,11 @@ export const mockRecord: StructuredHouseRecordV11 = {
         brand: "Control4",
         model: "EA-5",
         serialNumber: "C4EA5-6620",
-        location: "Main AV rack",
+        location: "Office equipment cabinet",
         role: "Control engine",
         status: "active",
         verification: "needs-review",
-        notes: "Model verified; serial pending recheck."
+        notes: "Model verified; serial pending recheck.",
       },
       {
         id: "rack-ups",
@@ -98,23 +98,23 @@ export const mockRecord: StructuredHouseRecordV11 = {
         role: "Short-duration backup",
         status: "active",
         verification: "unverified",
-        notes: "Intentional integrity issue: missing location."
+        notes: "Intentional integrity issue: missing location.",
       },
       {
-        id: "rack-apple-tv-family",
+        id: "rack-apple-tv-great-room",
         category: "av",
-        name: "Apple TV Family Room",
+        name: "Apple TV Great Room",
         brand: "Apple",
         model: "Apple TV 4K",
-        serialNumber: "ATV4K-FR-1288",
-        location: "Family room media cabinet",
+        serialNumber: "ATV4K-GR-1288",
+        location: "Great Room media zone",
         role: "Streaming endpoint",
         status: "active",
-        verification: "verified"
-      }
+        verification: "verified",
+      },
     ],
-    networkNotes: "Main rack supports WAN edge, PoE switching, control, and media endpoints.",
-    controlNotes: "Control system coordinates AV switching, lighting scenes, and selected automation routines."
+    networkNotes: "Main structured wiring supports WAN edge, PoE switching, control, and media endpoints.",
+    controlNotes: "Control system coordinates AV switching, selected automation routines, and serviceability.",
   },
 
   majorSystems: [
@@ -128,7 +128,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
       installDate: "2022-09-12",
       location: "Side yard condenser / attic air handler",
       status: "active",
-      verification: "verified"
+      verification: "verified",
     },
     {
       id: "sys-water-heater-garage",
@@ -140,7 +140,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
       installDate: "2023-04-18",
       location: "Garage mechanical wall",
       status: "active",
-      verification: "verified"
+      verification: "verified",
     },
     {
       id: "sys-fridge-kitchen",
@@ -152,8 +152,8 @@ export const mockRecord: StructuredHouseRecordV11 = {
       installDate: "2024-02-01",
       location: "Kitchen",
       status: "active",
-      verification: "verified"
-    }
+      verification: "verified",
+    },
   ],
 
   monitoring: {
@@ -167,7 +167,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         location: "Kitchen dishwasher bay",
         status: "active",
         lastSeenAt: "2026-03-14T14:52:00Z",
-        verification: "verified"
+        verification: "verified",
       },
       {
         id: "mon-leak-water-heater",
@@ -178,7 +178,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         location: "Garage water heater pan",
         status: "active",
         lastSeenAt: "2026-03-14T14:49:00Z",
-        verification: "verified"
+        verification: "verified",
       },
       {
         id: "mon-freezer-garage",
@@ -190,19 +190,19 @@ export const mockRecord: StructuredHouseRecordV11 = {
         status: "needs-battery",
         lastSeenAt: "2026-03-12T22:10:00Z",
         verification: "verified",
-        notes: "Battery warning triggered this week."
+        notes: "Battery warning triggered this week.",
       },
       {
         id: "mon-rack-temp",
         platform: "yolink",
         sensorType: "temperature",
         name: "Rack Temperature Monitor",
-        protectedPoint: "Main AV rack",
-        location: "Main AV rack",
+        protectedPoint: "Garage equipment wall",
+        location: "Garage equipment wall",
         status: "active",
         lastSeenAt: "2026-03-14T14:55:00Z",
-        verification: "verified"
-      }
+        verification: "verified",
+      },
     ],
     eventHistory: [
       {
@@ -215,7 +215,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "medium",
         relatedObjectIds: ["mon-freezer-garage"],
         eventAt: "2026-03-12T22:10:00Z",
-        notes: "Battery replacement pending."
+        notes: "Battery replacement pending.",
       },
       {
         id: "evt-rack-heat-spike",
@@ -227,9 +227,9 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "low",
         relatedObjectIds: ["mon-rack-temp", "rack-poe-switch"],
         eventAt: "2026-03-08T19:20:00Z",
-        notes: "Resolved naturally after HVAC recovery."
-      }
-    ]
+        notes: "Resolved naturally after HVAC recovery.",
+      },
+    ],
   },
 
   prevention: {
@@ -242,7 +242,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         mitigationDevice: "YoLink leak sensor",
         localShutoffPresent: true,
         verification: "verified",
-        lastVerifiedAt: "2026-03-01"
+        lastVerifiedAt: "2026-03-01",
       },
       {
         id: "prot-water-heater",
@@ -252,7 +252,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         mitigationDevice: "Leak pan sensor",
         localShutoffPresent: true,
         verification: "verified",
-        lastVerifiedAt: "2026-03-01"
+        lastVerifiedAt: "2026-03-01",
       },
       {
         id: "prot-fridge",
@@ -263,9 +263,9 @@ export const mockRecord: StructuredHouseRecordV11 = {
         localShutoffPresent: false,
         verification: "needs-review",
         lastVerifiedAt: "2026-03-01",
-        notes: "Intentional integrity issue: shutoff not confirmed."
-      }
-    ]
+        notes: "Intentional integrity issue: shutoff not confirmed.",
+      },
+    ],
   },
 
   service: {
@@ -278,7 +278,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         source: "pm-baseline",
         status: "resolved",
         eventAt: "2026-03-01T09:00:00Z",
-        performedBy: "Desert Valley Inspections"
+        performedBy: "Partner intake team",
       },
       {
         id: "svc-rack-review-20260305",
@@ -290,7 +290,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "low",
         relatedObjectIds: ["rack-core-router", "rack-poe-switch", "rack-control-processor"],
         eventAt: "2026-03-05T15:30:00Z",
-        performedBy: "IQR Field Review"
+        performedBy: "IQR Field Review",
       },
       {
         id: "svc-freezer-battery-followup",
@@ -301,7 +301,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         status: "open",
         severity: "medium",
         relatedObjectIds: ["mon-freezer-garage"],
-        eventAt: "2026-03-12T22:10:00Z"
+        eventAt: "2026-03-12T22:10:00Z",
       },
       {
         id: "svc-orphaned-demo",
@@ -313,8 +313,8 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "low",
         relatedObjectIds: ["ghost-device-001"],
         eventAt: "2026-03-07T12:00:00Z",
-        performedBy: "IQR Demo Data"
-      }
+        performedBy: "IQR Demo Data",
+      },
     ],
     unresolvedIssues: [
       {
@@ -324,7 +324,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "medium",
         relatedObjectIds: ["mon-freezer-garage"],
         identifiedAt: "2026-03-12T22:10:00Z",
-        status: "open"
+        status: "open",
       },
       {
         id: "issue-rack-ups-location",
@@ -333,8 +333,8 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "low",
         relatedObjectIds: ["rack-ups"],
         identifiedAt: "2026-03-14T10:20:00Z",
-        status: "watch"
-      }
+        status: "watch",
+      },
     ],
     yearlyUpdates: [
       {
@@ -345,9 +345,9 @@ export const mockRecord: StructuredHouseRecordV11 = {
         source: "manual",
         status: "resolved",
         eventAt: "2026-03-10T11:00:00Z",
-        performedBy: "IQR Annual Review"
-      }
-    ]
+        performedBy: "IQR Annual Review",
+      },
+    ],
   },
 
   integrity: {
@@ -358,7 +358,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "medium",
         objectType: "RackDevice",
         objectId: "rack-ups",
-        message: "Rack UPS is missing a location."
+        message: "Rack UPS is missing a location.",
       },
       {
         id: "integrity-rack-ups-verification",
@@ -366,7 +366,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "medium",
         objectType: "RackDevice",
         objectId: "rack-ups",
-        message: "Rack UPS is not verified."
+        message: "Rack UPS is not verified.",
       },
       {
         id: "integrity-orphaned-event",
@@ -374,7 +374,7 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "high",
         objectType: "ServiceEvent",
         objectId: "svc-orphaned-demo",
-        message: "Legacy control review references unknown object ID ghost-device-001."
+        message: "Legacy control review references unknown object ID ghost-device-001.",
       },
       {
         id: "integrity-fridge-shutoff-review",
@@ -382,9 +382,101 @@ export const mockRecord: StructuredHouseRecordV11 = {
         severity: "medium",
         objectType: "RiskProtectionPoint",
         objectId: "prot-fridge",
-        message: "Kitchen refrigerator protection point needs shutoff verification."
-      }
+        message: "Kitchen refrigerator protection point needs shutoff verification.",
+      },
     ],
-    integrityScore: 82
-  }
+    integrityScore: 82,
+  },
+
+  spatial: {
+    floors: [
+      {
+        id: "floor-main",
+        label: "Main Floor",
+        levelOrder: 1,
+      },
+    ],
+    areas: [
+      { id: "area-great-room", floorId: "floor-main", label: "Great Room", areaType: "room" },
+      { id: "area-kitchen", floorId: "floor-main", label: "Kitchen", areaType: "room" },
+      { id: "area-pantry", floorId: "floor-main", label: "Pantry", areaType: "room" },
+      { id: "area-office", floorId: "floor-main", label: "Office", areaType: "room" },
+      { id: "area-laundry", floorId: "floor-main", label: "Laundry", areaType: "room" },
+      { id: "area-garage", floorId: "floor-main", label: "Garage", areaType: "room" },
+      { id: "area-primary-suite", floorId: "floor-main", label: "Primary Suite", areaType: "zone" },
+      { id: "area-courtyard", label: "Courtyard", areaType: "exterior" },
+      { id: "area-covered-patio", label: "Covered Patio", areaType: "exterior" },
+    ],
+    surfaceReferences: [
+      { id: "surf-kitchen-cabinets", areaId: "area-kitchen", label: "Kitchen Cabinets", category: "cabinet" },
+      { id: "surf-great-room-walls", areaId: "area-great-room", label: "Great Room Walls", category: "wall" },
+      { id: "surf-office-walls", areaId: "area-office", label: "Office Walls", category: "wall" },
+      { id: "surf-courtyard-gate", areaId: "area-courtyard", label: "Courtyard Gate", category: "door" },
+    ],
+    floorPlanDocuments: [
+      {
+        id: "fp-main-master",
+        title: "Main Level Architectural Plan",
+        fileName: "main-level-master-plan.pdf",
+        kind: "master",
+        floorId: "floor-main",
+        versionLabel: "Architectural Master v1",
+        note: "Preserved source floor plan. Do not overwrite.",
+      },
+      {
+        id: "fp-main-overlay",
+        title: "Main Level Device Placement Overlay",
+        fileName: "main-level-device-placement-overlay.pdf",
+        kind: "derived",
+        floorId: "floor-main",
+        versionLabel: "Display Overlay v1",
+        sourceDocumentId: "fp-main-master",
+        note: "Derived display copy linked to preserved master.",
+      },
+    ],
+    finishLedger: [
+      {
+        id: "finish-great-room-walls-current",
+        floorId: "floor-main",
+        areaId: "area-great-room",
+        surfaceId: "surf-great-room-walls",
+        current: true,
+        brand: "Sherwin-Williams",
+        productLine: "Emerald",
+        colorName: "Warm White",
+        colorCode: "SW 7008",
+        sheen: "Eggshell",
+        dateApplied: "2024-05-18",
+        appliedBy: "Partner finish records",
+      },
+      {
+        id: "finish-office-walls-current",
+        floorId: "floor-main",
+        areaId: "area-office",
+        surfaceId: "surf-office-walls",
+        current: true,
+        brand: "Benjamin Moore",
+        productLine: "Regal Select",
+        colorName: "Soft Gray",
+        colorCode: "OC-23",
+        sheen: "Matte",
+        dateApplied: "2023-11-02",
+        appliedBy: "Partner finish records",
+      },
+      {
+        id: "finish-kitchen-cabinets-current",
+        floorId: "floor-main",
+        areaId: "area-kitchen",
+        surfaceId: "surf-kitchen-cabinets",
+        current: true,
+        brand: "Dunn-Edwards",
+        productLine: "Aristoshield",
+        colorName: "Linen White",
+        colorCode: "DEW340",
+        sheen: "Satin",
+        dateApplied: "2024-05-18",
+        appliedBy: "Partner finish records",
+      },
+    ],
+  },
 };

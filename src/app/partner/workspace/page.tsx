@@ -48,7 +48,6 @@ export default function PartnerWorkspacePage() {
             Back to Home
           </Link>
           <div className="subpage-nav-links">
-            <Link href="/partner" className="subnav-pill">Partner Entry</Link>
             <Link href="/partner/questionnaire" className="subnav-pill">Questionnaire</Link>
             <Link href="/partner/outputs/property-record-shell" className="subnav-pill">Property Record Shell</Link>
             <Link href="/telemetry" className="subnav-pill">System Index</Link>

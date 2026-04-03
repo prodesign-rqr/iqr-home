@@ -31,9 +31,7 @@ export default function OutputsPage() {
             Back to Questionnaire
           </Link>
           <div className="subpage-nav-links">
-            <Link href="/partner" className="subnav-pill">
-              Partner Entry
-            </Link>
+            <Link href="/partner/workspace" className="subnav-pill">Partner Workspace</Link>
             <span className="subnav-current-dot" aria-hidden="true">
               &bull;
             </span>

@@ -80,7 +80,7 @@ export default function PartnerTelemetryPage() {
           />
         </div>
 
-        <h1>Spatial Incident Packet Engine</h1>
+        <h1>Partner Telemetry</h1>
         <p>
           Partner telemetry now shows which artifact and routing surfaces are ready, which are only reported, and which are blocked by unresolved handoff or generation gaps.
         </p>
@@ -88,9 +88,8 @@ export default function PartnerTelemetryPage() {
         <div className="subpage-nav">
           <Link href="/" className="subpage-nav-home">Back to Home</Link>
           <div className="subpage-nav-links">
-            <Link href="/partner" className="subnav-pill">Partner Entry</Link>
-            <Link href="/partner/workspace" className="subnav-pill">Property Workspace</Link>
-            <span className="subnav-pill current">Telemetry</span>
+            <Link href="/partner/workspace" className="subnav-pill">Partner Workspace</Link>
+            <span className="subnav-pill current">Partner Telemetry</span>npm.cmd run build
             <Link href="/hq/telemetry" className="subnav-pill">HQ Telemetry</Link>
           </div>
         </div>

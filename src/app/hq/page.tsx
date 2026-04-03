@@ -58,11 +58,8 @@ export default function HQPage() {
           </Link>
 
           <div className="subpage-nav-links">
-            <Link href="/partner" className="subnav-pill">
-              Partner Entry
-            </Link>
             <Link href="/partner/workspace" className="subnav-pill">
-              Property Workspace
+              Partner Workspace
             </Link>
             <Link href="/partner/questionnaire" className="subnav-pill">
               Questionnaire

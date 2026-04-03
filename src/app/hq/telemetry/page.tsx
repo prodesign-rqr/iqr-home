@@ -89,7 +89,7 @@ export default function HQTelemetryPage() {
           <Link href="/" className="subpage-nav-home">Back to Home</Link>
           <div className="subpage-nav-links">
             <Link href="/hq" className="subnav-pill">HQ Admin</Link>
-            <Link href="/partner/workspace" className="subnav-pill">Property Workspace</Link>
+            <Link href="/partner/workspace" className="subnav-pill">Partner Workspace</Link>
             <Link href="/partner/telemetry" className="subnav-pill">Partner Telemetry</Link>
             <span className="subnav-pill current">HQ Telemetry</span>
           </div>

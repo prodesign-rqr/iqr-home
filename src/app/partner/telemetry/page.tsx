@@ -89,7 +89,7 @@ export default function PartnerTelemetryPage() {
           <Link href="/" className="subpage-nav-home">Back to Home</Link>
           <div className="subpage-nav-links">
             <Link href="/partner/workspace" className="subnav-pill">Partner Workspace</Link>
-            <span className="subnav-pill current">Partner Telemetry</span>npm.cmd run build
+            <span className="subnav-pill current">Partner Telemetry</span>
             <Link href="/hq/telemetry" className="subnav-pill">HQ Telemetry</Link>
           </div>
         </div>

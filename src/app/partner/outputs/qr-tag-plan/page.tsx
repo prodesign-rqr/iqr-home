@@ -46,7 +46,7 @@ export default function QrTagPlanPage() {
             <div className="output-detail-card">
               <div className="detail-card-top">
                 <strong>No mapped tag items yet</strong>{" "}
-                <span className="qty-chip">0</span>
+                <span className="qty-chip" style={{ marginLeft: "0.35rem" }}>0</span>
               </div>
               <p>Save a questionnaire draft with real scope selections to generate the first-pass QR plan.</p>
             </div>
@@ -55,7 +55,7 @@ export default function QrTagPlanPage() {
               <div className="output-detail-card" key={item.code}>
                 <div className="detail-card-top">
                   <strong>{item.label}</strong>{" "}
-                  <span className="qty-chip">{item.code}</span>
+                  <span className="qty-chip" style={{ marginLeft: "0.35rem" }}>{item.code}</span>
                 </div>
                 <p>
                   <strong>Destination:</strong> {item.destination}

@@ -45,7 +45,7 @@ export default function PropertyRecordShellPage() {
           {blocks.map((block) => (
             <div className="output-detail-card" key={block.title}>
               <div className="detail-card-top">
-                <strong>{block.title}</strong>
+                <strong>{block.title} </strong>
                 <span className="qty-chip">{block.status}</span>
               </div>
               <p>{block.description}</p>

@@ -45,7 +45,7 @@ export default function QrTagPlanPage() {
           {items.length === 0 ? (
             <div className="output-detail-card">
               <div className="detail-card-top">
-                <strong>No mapped tag items yet</strong>
+                <strong>No mapped tag items yet </strong>
                 <span className="qty-chip">0</span>
               </div>
               <p>Save a questionnaire draft with real scope selections to generate the first-pass QR plan.</p>
@@ -54,7 +54,7 @@ export default function QrTagPlanPage() {
             items.map((item) => (
               <div className="output-detail-card" key={item.code}>
                 <div className="detail-card-top">
-                  <strong>{item.label}</strong>
+                  <strong>{item.label} </strong>
                   <span className="qty-chip">{item.code}</span>
                 </div>
                 <p>

@@ -63,6 +63,12 @@ export default async function PropertyWorkspacePage({ params }: Props) {
             Workspace
           </Link>
           <div className="subpage-nav-links">
+            <Link href={`/workspace/${id}/edit`} className="subnav-pill">
+              Edit Property
+            </Link>
+            <Link href={`/workspace/${id}/systems`} className="subnav-pill">
+              Systems
+            </Link>
             <Link href={`/workspace/${id}/add-floor`} className="subnav-pill">
               + Add Floor
             </Link>
@@ -260,43 +266,50 @@ export default async function PropertyWorkspacePage({ params }: Props) {
                 {roomList.map((room) => {
                   const floor = floorList.find((f) => f.id === room.floor_id);
                   return (
-                    <div
+                    <Link
                       key={room.id}
-                      style={{
-                        padding: "12px 16px",
-                        borderRadius: 10,
-                        border:
-                          room.status === "closed"
-                            ? "1px solid rgba(127,226,150,0.2)"
-                            : "1px solid rgba(255,255,255,0.07)",
-                        background:
-                          room.status === "closed"
-                            ? "rgba(127,226,150,0.03)"
-                            : "rgba(255,255,255,0.02)",
-                        display: "grid",
-                        gridTemplateColumns: "1fr auto",
-                        alignItems: "center",
-                        gap: 10,
-                      }}
+                      href={`/workspace/${id}/room/${room.id}`}
+                      style={{ textDecoration: "none", color: "inherit" }}
                     >
-                      <div>
-                        <div
-                          style={{
-                            fontWeight: 600,
-                            fontSize: "0.88rem",
-                            color: room.status === "closed" ? "rgba(255,255,255,0.45)" : "#ecf3fb",
-                            textDecoration: room.status === "closed" ? "line-through" : "none",
-                            marginBottom: 2,
-                          }}
-                        >
-                          {room.name}
+                      <div
+                        style={{
+                          padding: "12px 16px",
+                          borderRadius: 10,
+                          border:
+                            room.status === "closed"
+                              ? "1px solid rgba(127,226,150,0.2)"
+                              : "1px solid rgba(255,255,255,0.07)",
+                          background:
+                            room.status === "closed"
+                              ? "rgba(127,226,150,0.03)"
+                              : "rgba(255,255,255,0.02)",
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          alignItems: "center",
+                          gap: 10,
+                          cursor: "pointer",
+                          transition: "border-color 0.15s ease",
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "0.88rem",
+                              color: room.status === "closed" ? "rgba(255,255,255,0.45)" : "#ecf3fb",
+                              textDecoration: room.status === "closed" ? "line-through" : "none",
+                              marginBottom: 2,
+                            }}
+                          >
+                            {room.name}
+                          </div>
+                          <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.28)" }}>
+                            {floor?.label ?? "No floor"} — {room.area_type}
+                          </div>
                         </div>
-                        <div style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.28)" }}>
-                          {floor?.label ?? "No floor"} — {room.area_type}
-                        </div>
+                        <StatusBadge status={room.status} size="sm" />
                       </div>
-                      <StatusBadge status={room.status} size="sm" />
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -421,28 +434,47 @@ export default async function PropertyWorkspacePage({ params }: Props) {
         }}
       >
         {[
-          { label: "Systems", note: "Planned" },
-          { label: "QR Tags", note: "Planned" },
+          { label: "Systems", href: `/workspace/${id}/systems`, note: "Available" },
+          { label: "QR Tags", href: `/workspace/${id}/qr-tags`, note: "Available" },
           { label: "Floor Plans", note: "Planned" },
           { label: "Integrity", href: "/integrity", note: "Available" },
           { label: "Timeline", href: "/service-events", note: "Available" },
           { label: "Documents", note: "Planned" },
-        ].map((mod) => (
-          <div
-            key={mod.label}
-            style={{
-              padding: "14px 16px",
-              borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.05)",
-              opacity: mod.note === "Planned" ? 0.45 : 0.8,
-            }}
-          >
-            <div style={{ fontWeight: 600, fontSize: "0.85rem", marginBottom: 2 }}>
-              {mod.label}
+        ].map((mod) =>
+          mod.href ? (
+            <Link key={mod.label} href={mod.href} style={{ textDecoration: "none", color: "inherit" }}>
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  opacity: 0.85,
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ fontWeight: 600, fontSize: "0.85rem", marginBottom: 2 }}>
+                  {mod.label}
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "rgba(109,211,255,0.5)" }}>{mod.note}</div>
+              </div>
+            </Link>
+          ) : (
+            <div
+              key={mod.label}
+              style={{
+                padding: "14px 16px",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.05)",
+                opacity: 0.35,
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: "0.85rem", marginBottom: 2 }}>
+                {mod.label}
+              </div>
+              <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)" }}>{mod.note}</div>
             </div>
-            <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)" }}>{mod.note}</div>
-          </div>
-        ))}
+          )
+        )}
       </div>
     </main>
   );

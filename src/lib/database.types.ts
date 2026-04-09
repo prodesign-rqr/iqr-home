@@ -2,6 +2,28 @@ export type PropertyStatus = "draft" | "active" | "needs_review" | "archived";
 export type RoomAreaType = "room" | "zone" | "exterior" | "mechanical";
 export type RoomStatus = "pending" | "open" | "closed" | "needs_revisit";
 export type WalkthroughStatus = "active" | "paused" | "completed" | "abandoned";
+export type SystemCategory =
+  | "hvac" | "water_heater" | "electrical" | "plumbing" | "roof"
+  | "appliance" | "pool" | "security" | "network" | "av" | "other";
+export type SystemStatus = "active" | "inactive" | "unknown" | "decommissioned";
+export type VerificationStatus = "verified" | "unverified" | "needs_review";
+
+export interface System {
+  id: string;
+  property_id: string;
+  name: string;
+  category: SystemCategory;
+  manufacturer: string;
+  model: string;
+  serial_number: string;
+  install_date: string | null;
+  location: string;
+  status: SystemStatus;
+  verification: VerificationStatus;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Property {
   id: string;

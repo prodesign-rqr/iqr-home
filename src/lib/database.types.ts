@@ -1,4 +1,43 @@
 export type PropertyStatus = "draft" | "active" | "needs_review" | "archived";
+export type EntryTypeEnum = "front_door" | "rear_door" | "side_door" | "garage" | "other";
+export type EntryIntegrationStatusEnum = "not_configured" | "planned" | "partial" | "configured";
+export type EntryLockTypeEnum = "smart_deadbolt" | "smart_lever" | "keypad" | "other" | "none";
+export type EntryMiddlewareTypeEnum = "hubitat" | "home_assistant" | "control4" | "direct_api" | "none";
+export type ServiceEntryActorRoleEnum = "service_provider" | "partner_steward" | "homeowner" | "system";
+export type ServiceEntryResultEnum = "requested" | "approved" | "completed" | "denied" | "planned";
+export type ServiceEntrySourceEnum = "qr_scan" | "manual" | "planned";
+
+export interface EntryNode {
+  id: string;
+  property_id: string;
+  label: string;
+  entry_type: EntryTypeEnum;
+  location_description: string;
+  is_primary_service_entry: boolean;
+  qr_enabled: boolean;
+  service_entry_enabled: boolean;
+  lock_planned_type: EntryLockTypeEnum | null;
+  lock_planned_brand: string;
+  middleware_planned_type: EntryMiddlewareTypeEnum | null;
+  integration_status: EntryIntegrationStatusEnum;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServiceEntryEvent {
+  id: string;
+  property_id: string;
+  entry_node_id: string;
+  timestamp: string;
+  actor_role: ServiceEntryActorRoleEnum;
+  workflow_type: string;
+  result: ServiceEntryResultEnum;
+  linked_visit_id: string | null;
+  source: ServiceEntrySourceEnum;
+  notes: string;
+  created_at: string;
+}
 export type RoomAreaType = "room" | "zone" | "exterior" | "mechanical";
 export type RoomStatus = "pending" | "open" | "closed" | "needs_revisit";
 export type WalkthroughStatus = "active" | "paused" | "completed" | "abandoned";

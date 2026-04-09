@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
-import type { Property, Floor, Room, WalkthroughSession } from "../../../lib/database.types";
+import type { Property, Floor, Room, WalkthroughSession, EntryNode, ServiceEntryEvent } from "../../../lib/database.types";
 import StatusBadge from "../../../components/StatusBadge";
+import ServiceEntrySection from "../../../components/ServiceEntrySection";
+import type { ServiceEntryNodeRecord, ServiceEntryEventRecord } from "../../../lib/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -40,9 +42,52 @@ export default async function PropertyWorkspacePage({ params }: Props) {
     .eq("property_id", id)
     .order("created_at", { ascending: false });
 
+  const { data: entryNodesData } = await supabase
+    .from("entry_nodes")
+    .select("*")
+    .eq("property_id", id)
+    .order("created_at", { ascending: true });
+
+  const { data: serviceEntryEventsData } = await supabase
+    .from("service_entry_events")
+    .select("*")
+    .eq("property_id", id)
+    .order("timestamp", { ascending: false });
+
   const floorList = (floorsData as Floor[] | null) ?? [];
   const roomList = (roomsData as Room[] | null) ?? [];
   const sessionList = (sessionsData as WalkthroughSession[] | null) ?? [];
+  const entryNodeList = (entryNodesData as EntryNode[] | null) ?? [];
+  const serviceEntryEventList = (serviceEntryEventsData as ServiceEntryEvent[] | null) ?? [];
+
+  const entryNodesForSection: ServiceEntryNodeRecord[] = entryNodeList.map((n) => ({
+    id: n.id,
+    propertyId: n.property_id,
+    label: n.label,
+    entryType: n.entry_type,
+    locationDescription: n.location_description,
+    isPrimaryServiceEntry: n.is_primary_service_entry,
+    qrEnabled: n.qr_enabled,
+    serviceEntryEnabled: n.service_entry_enabled,
+    lockPlannedType: n.lock_planned_type ?? undefined,
+    lockPlannedBrand: n.lock_planned_brand,
+    middlewarePlannedType: n.middleware_planned_type ?? undefined,
+    integrationStatus: n.integration_status,
+    notes: n.notes,
+  }));
+
+  const serviceEntryEventsForSection: ServiceEntryEventRecord[] = serviceEntryEventList.map((e) => ({
+    id: e.id,
+    propertyId: e.property_id,
+    entryNodeId: e.entry_node_id,
+    timestamp: e.timestamp,
+    actorRole: e.actor_role,
+    workflowType: "QR Service Entry",
+    result: e.result,
+    linkedVisitId: e.linked_visit_id ?? undefined,
+    source: e.source,
+    notes: e.notes,
+  }));
   const activeSession = sessionList.find(
     (s) => s.status === "active" || s.status === "paused"
   );
@@ -424,6 +469,13 @@ export default async function PropertyWorkspacePage({ params }: Props) {
         )}
       </div>
 
+      <div style={{ padding: "0 24px" }}>
+        <ServiceEntrySection
+          entryNodes={entryNodesForSection}
+          events={serviceEntryEventsForSection}
+        />
+      </div>
+
       <div
         style={{
           padding: "24px",
@@ -431,6 +483,7 @@ export default async function PropertyWorkspacePage({ params }: Props) {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
           gap: 10,
+          marginTop: 24,
         }}
       >
         {[

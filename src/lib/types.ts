@@ -326,3 +326,67 @@ export interface AttentionItem {
   linked_system_id?: string;
   due_note: string;
 }
+
+export type EntryNodeIntegrationStatus =
+  | "not_configured"
+  | "planned"
+  | "partial"
+  | "configured";
+
+export type EntryNodeLockType =
+  | "smart_deadbolt"
+  | "smart_lever"
+  | "keypad"
+  | "other"
+  | "none";
+
+export type EntryNodeMiddlewareType =
+  | "hubitat"
+  | "home_assistant"
+  | "control4"
+  | "direct_api"
+  | "none";
+
+export interface EntryNode {
+  id: string;
+  propertyId: string;
+  label: string;
+  entryType: "front_door" | "rear_door" | "side_door" | "garage" | "other";
+  locationDescription?: string;
+  isPrimaryServiceEntry: boolean;
+  qrEnabled: boolean;
+  serviceEntryEnabled: boolean;
+  lockPlannedType?: EntryNodeLockType;
+  lockPlannedBrand?: string;
+  middlewarePlannedType?: EntryNodeMiddlewareType;
+  integrationStatus: EntryNodeIntegrationStatus;
+  notes?: string;
+}
+
+export type ServiceEntryWorkflowType = "QR Service Entry";
+
+export type ServiceEntryResult =
+  | "requested"
+  | "approved"
+  | "completed"
+  | "denied"
+  | "planned";
+
+export type ServiceEntryActorRole =
+  | "service_provider"
+  | "partner_steward"
+  | "homeowner"
+  | "system";
+
+export interface ServiceEntryEvent {
+  id: string;
+  propertyId: string;
+  entryNodeId: string;
+  timestamp: string;
+  actorRole: ServiceEntryActorRole;
+  workflowType: ServiceEntryWorkflowType;
+  result: ServiceEntryResult;
+  linkedVisitId?: string;
+  source: "qr_scan" | "manual" | "planned";
+  notes?: string;
+}

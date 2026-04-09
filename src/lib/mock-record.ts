@@ -479,4 +479,25 @@ export const mockRecord: StructuredHouseRecordV11 = {
       },
     ],
   },
+
+  serviceEntry: {
+    entryNodes: [
+      {
+        id: "entry-front-door",
+        propertyId: "iqr-sample-desert-residence-001",
+        label: "Front Door",
+        entryType: "front_door",
+        locationDescription: "Main residence entry, facing courtyard",
+        isPrimaryServiceEntry: true,
+        qrEnabled: false,
+        serviceEntryEnabled: false,
+        lockPlannedType: "smart_deadbolt",
+        lockPlannedBrand: "Yale",
+        middlewarePlannedType: "hubitat",
+        integrationStatus: "planned",
+        notes: "Designated managed service-provider entry point. QR and lock integration planned for future phase.",
+      },
+    ],
+    events: [],
+  },
 };

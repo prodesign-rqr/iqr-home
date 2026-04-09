@@ -250,6 +250,40 @@ export type StructuredHouseRecordV11 = {
   };
 
   spatial?: SpatialRecordV1;
+
+  serviceEntry?: {
+    entryNodes: ServiceEntryNodeRecord[];
+    events: ServiceEntryEventRecord[];
+  };
+};
+
+export type ServiceEntryNodeRecord = {
+  id: string;
+  propertyId: string;
+  label: string;
+  entryType: "front_door" | "rear_door" | "side_door" | "garage" | "other";
+  locationDescription?: string;
+  isPrimaryServiceEntry: boolean;
+  qrEnabled: boolean;
+  serviceEntryEnabled: boolean;
+  lockPlannedType?: "smart_deadbolt" | "smart_lever" | "keypad" | "other" | "none";
+  lockPlannedBrand?: string;
+  middlewarePlannedType?: "hubitat" | "home_assistant" | "control4" | "direct_api" | "none";
+  integrationStatus: "not_configured" | "planned" | "partial" | "configured";
+  notes?: string;
+};
+
+export type ServiceEntryEventRecord = {
+  id: string;
+  propertyId: string;
+  entryNodeId: string;
+  timestamp: string;
+  actorRole: "service_provider" | "partner_steward" | "homeowner" | "system";
+  workflowType: "QR Service Entry";
+  result: "requested" | "approved" | "completed" | "denied" | "planned";
+  linkedVisitId?: string;
+  source: "qr_scan" | "manual" | "planned";
+  notes?: string;
 };
 
 export function validateSpatialFinishRecord(

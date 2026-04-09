@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SectionCard from "../../components/SectionCard";
 import TelemetryGrid from "../../components/TelemetryGrid";
+import ServiceEntrySection from "../../components/ServiceEntrySection";
 import { mockRecord } from "../../lib/mock-record";
 import {
   buildSectionIntegrityRollup,
@@ -10,7 +11,7 @@ import {
 import type { TelemetryTile, TruthListItem } from "../../lib/types";
 
 export default function TelemetryPage() {
-  const { property, meta, avItInfrastructure, monitoring } = mockRecord;
+  const { property, meta, avItInfrastructure, monitoring, serviceEntry } = mockRecord;
 
   const rackItems: TruthListItem[] = (avItInfrastructure?.rackDevices ?? []).map((device: any) => ({
     id: device.id,
@@ -240,6 +241,11 @@ export default function TelemetryPage() {
           )}
         </div>
       </SectionCard>
+
+      <ServiceEntrySection
+        entryNodes={serviceEntry?.entryNodes ?? []}
+        events={serviceEntry?.events ?? []}
+      />
     </main>
   );
 }

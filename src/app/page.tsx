@@ -1,167 +1,186 @@
-import Image from "next/image";
 import Link from "next/link";
-import SectionCard from "../components/SectionCard";
-import { mockRecord } from "../lib/mock-record";
-import { buildSpatialPropertyShell } from "../lib/property-workspace-v1";
 
 export default function HomePage() {
-  const shell = buildSpatialPropertyShell(mockRecord);
-  const selected = shell.selectedAreaContext;
-  const floors = shell.property.floors;
-  const exteriorAreas = shell.property.exteriorAreas;
-
   return (
     <main>
       <section className="hero">
-        <div className="subpage-logo-wrap">
-          <Image
-            src="/iqr-home-logo-tight-WonB.png"
-            alt="IQR Home"
-            width={140}
-            height={98}
-            className="subpage-logo"
-            priority
-          />
-        </div>
-        <h1>Spatial Property Record</h1>
+        <h1>IQR Home</h1>
         <p>
-          IQR now opens through a property-map-first shell that preserves the house as a
-          spatial record. The old section-first views remain available as secondary reference paths.
+          A house that can explain itself. Most houses are data-rich but memory-poor. IQR Home
+          replaces fragmented onboarding with a guided, room-by-room commissioning walkthrough
+          that creates a verified baseline property record.
         </p>
-
-<div className="subpage-nav">
-  <Link href="/partner/workspace" className="subpage-nav-home">
-    Open Spatial Workspace
-  </Link>
-  <a href="/property/test/spatial" style={{ color: "#0af" }}>
-    Open Spatial Test
-  </a>
-           <div className="subpage-nav-links">
+        <div className="subpage-nav">
+          <Link href="/workspace" className="subpage-nav-home">
+            Open Partner Workspace
+          </Link>
+          <div className="subpage-nav-links">
             <Link href="/telemetry" className="subnav-pill">Telemetry</Link>
             <Link href="/prevention" className="subnav-pill">Prevention</Link>
             <Link href="/service-events" className="subnav-pill">Service Events</Link>
             <Link href="/integrity" className="subnav-pill">Integrity</Link>
-            <Link href="/partner" className="subnav-pill">Partner Entry</Link>
           </div>
         </div>
       </section>
 
-      <SectionCard
-        title={shell.propertyName}
-        subtitle="Floor-plan-first shell for the canonical property record."
-        right={<span className="status-pill">Status: {shell.currentStatus}</span>}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 16,
+          marginTop: 24,
+          padding: "0 24px",
+        }}
       >
-        <div className="bullet-list">
-          <div className="list-card">
-            <strong>Property anchor</strong>
-            <div>{shell.streetAddress}</div>
-            <div className="muted small">{shell.parcelApn}</div>
-            <div className="muted small">Next: {shell.nextAction}</div>
+        {[
+          {
+            title: "One Walk. One Record.",
+            body: "The walkthrough session structures the commissioning of a house into a room-by-room, verified baseline record. Nothing is missed.",
+          },
+          {
+            title: "Property-First Architecture",
+            body: "The property is the permanent center of gravity. Every floor, room, system, and document anchors to the property record.",
+          },
+          {
+            title: "Explicit Closure Model",
+            body: "Rooms cannot be closed without confirmation. Data is structured, not free-form. Closure must be deliberate.",
+          },
+        ].map((card) => (
+          <div
+            key={card.title}
+            style={{
+              padding: "24px 22px",
+              borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.07)",
+              background: "rgba(255,255,255,0.02)",
+            }}
+          >
+            <div
+              style={{
+                fontWeight: 800,
+                fontSize: "1rem",
+                color: "#ecf3fb",
+                marginBottom: 10,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {card.title}
+            </div>
+            <div style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>
+              {card.body}
+            </div>
           </div>
-          <div className="list-card">
-            <strong>Floor plan documents</strong>
-            <div>{shell.masterFloorPlans.length} master / {shell.derivedFloorPlans.length} derived</div>
-            <div className="muted small">System Index remains available at {shell.systemIndexPath}</div>
-          </div>
-        </div>
-      </SectionCard>
+        ))}
+      </div>
 
-      <SectionCard title="Mapped Floors" subtitle="Primary property navigation is now spatially anchored.">
-        <div className="bullet-list">
-          {floors.map((floor) => (
-            <div className="list-card" key={floor.id}>
-              <strong>{floor.label}</strong>
-              <div className="muted small">{floor.areas.length} mapped rooms / zones</div>
-              <div className="detail-card-grid">
-                {floor.areas.map((area) => (
-                  <div className="detail-card" key={area.id}>
-                    <div className="detail-card-top">
-                      <strong>{area.label}</strong>
-                      <span className="status-pill">{area.areaType}</span>
-                    </div>
-                    <div className="muted small">
-                      Docs {area.recordCounts.documents} • Finishes {area.recordCounts.finishes} • Equipment {area.recordCounts.equipment}
-                    </div>
-                    <div className="muted small">
-                      Protection {area.recordCounts.protectionPoints} • Visits {area.recordCounts.visits} • Incidents {area.recordCounts.incidents}
-                    </div>
-                  </div>
-                ))}
-              </div>
+      <div
+        style={{
+          marginTop: 24,
+          padding: "24px",
+          borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.01)",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 12,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.25)",
+              marginBottom: 12,
+            }}
+          >
+            Core MVP Flows
+          </div>
+          {[
+            { label: "Partner Workspace", href: "/workspace" },
+            { label: "New Property", href: "/workspace/new" },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={{
+                display: "block",
+                padding: "8px 0",
+                fontSize: "0.875rem",
+                color: "#6dd3ff",
+                textDecoration: "none",
+                borderBottom: "1px solid rgba(255,255,255,0.04)",
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+        <div>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.25)",
+              marginBottom: 12,
+            }}
+          >
+            Reference Views
+          </div>
+          {[
+            { label: "Telemetry", href: "/telemetry" },
+            { label: "Prevention", href: "/prevention" },
+            { label: "Service Events", href: "/service-events" },
+            { label: "Integrity", href: "/integrity" },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              style={{
+                display: "block",
+                padding: "8px 0",
+                fontSize: "0.875rem",
+                color: "rgba(255,255,255,0.5)",
+                textDecoration: "none",
+                borderBottom: "1px solid rgba(255,255,255,0.04)",
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+        <div>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.25)",
+              marginBottom: 12,
+            }}
+          >
+            Planned Modules
+          </div>
+          {["Systems", "QR Tags", "Floor Plans", "Documents"].map((label) => (
+            <div
+              key={label}
+              style={{
+                padding: "8px 0",
+                fontSize: "0.875rem",
+                color: "rgba(255,255,255,0.22)",
+                borderBottom: "1px solid rgba(255,255,255,0.04)",
+              }}
+            >
+              {label}
             </div>
           ))}
         </div>
-      </SectionCard>
-
-      <SectionCard title="Exterior Areas" subtitle="Exterior and service areas are first-class mapped areas.">
-        <div className="detail-card-grid">
-          {exteriorAreas.map((area) => (
-            <div className="detail-card" key={area.id}>
-              <div className="detail-card-top">
-                <strong>{area.label}</strong>
-                <span className="status-pill">{area.areaType}</span>
-              </div>
-              <div className="muted small">
-                Docs {area.recordCounts.documents} • Finishes {area.recordCounts.finishes} • Equipment {area.recordCounts.equipment}
-              </div>
-            </div>
-          ))}
-        </div>
-      </SectionCard>
-
-      <SectionCard title="Selected Area Detail" subtitle="Compatibility-safe detail panel foundation for the map shell.">
-        {selected ? (
-          <div className="bullet-list">
-            <div className="list-card">
-              <div className="detail-card-top">
-                <strong>{selected.label}</strong>
-                <span className="status-pill">{selected.areaType}</span>
-              </div>
-              <div className="muted small">{selected.floorLabel ?? "Exterior area"}</div>
-              <div className="muted small">{selected.detailSummary}</div>
-            </div>
-
-            <div className="list-card">
-              <strong>Floor plan documents</strong>
-              {selected.groupedRecords.documents.length ? (
-                selected.groupedRecords.documents.map((doc) => (
-                  <div className="muted small" key={doc.id}>
-                    {doc.title} • {doc.kind} • {doc.versionLabel}
-                  </div>
-                ))
-              ) : (
-                <div className="muted small">No documents attached yet.</div>
-              )}
-            </div>
-
-            <div className="list-card">
-              <strong>Finish history</strong>
-              {selected.groupedRecords.finishes.length ? (
-                selected.groupedRecords.finishes.map((finish) => (
-                  <div className="muted small" key={finish.id}>
-                    {finish.brand} {finish.colorName} • Surface {finish.surfaceId} {finish.current ? "• current" : ""}
-                  </div>
-                ))
-              ) : (
-                <div className="muted small">No finish history attached yet.</div>
-              )}
-            </div>
-
-            <div className="list-card">
-              <strong>Equipment and protection context</strong>
-              <div className="muted small">Equipment: {selected.groupedRecords.equipment.length}</div>
-              <div className="muted small">Protection points: {selected.groupedRecords.protectionPoints.length}</div>
-              <div className="muted small">Incidents: {selected.groupedRecords.incidents.length}</div>
-              <div className="muted small">Visits: {selected.groupedRecords.visits.length}</div>
-            </div>
-          </div>
-        ) : (
-          <div className="list-card">
-            <strong>No selected area yet</strong>
-            <div className="muted small">Spatial shell is present but no mapped area has been promoted into detail context.</div>
-          </div>
-        )}
-      </SectionCard>
+      </div>
     </main>
   );
 }

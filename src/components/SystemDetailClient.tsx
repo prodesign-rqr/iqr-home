@@ -60,6 +60,7 @@ export default function SystemDetailClient({ system: initialSystem, propertyId, 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const [name, setName] = useState(system.name);
   const [category, setCategory] = useState<SystemCategory>(system.category);
@@ -99,6 +100,7 @@ export default function SystemDetailClient({ system: initialSystem, propertyId, 
     }
     setSaving(true);
     setError(null);
+    setSuccess(null);
 
     const updates = {
       name: name.trim(),
@@ -120,15 +122,28 @@ export default function SystemDetailClient({ system: initialSystem, propertyId, 
       .eq("id", system.id)
       .eq("property_id", propertyId);
 
-    setSaving(false);
-
     if (dbError) {
-      setError(dbError.message);
+      setSaving(false);
+      setError("Save failed: " + dbError.message);
       return;
     }
 
-    setSystem({ ...system, ...updates });
+    const { data: refetched, error: fetchError } = await supabase
+      .from("systems")
+      .select("*")
+      .eq("id", system.id)
+      .maybeSingle();
+
+    setSaving(false);
+
+    if (fetchError || !refetched) {
+      setError("Saved, but could not re-fetch record: " + (fetchError?.message ?? "not found"));
+      return;
+    }
+
+    setSystem(refetched as System);
     setEditing(false);
+    setSuccess("Changes saved successfully.");
     router.refresh();
   }
 
@@ -207,6 +222,22 @@ export default function SystemDetailClient({ system: initialSystem, propertyId, 
       </section>
 
       <div style={{ padding: "0 24px 48px", display: "grid", gap: 24 }}>
+
+        {success && (
+          <div
+            style={{
+              padding: "12px 16px",
+              borderRadius: 8,
+              background: "rgba(127,226,150,0.12)",
+              border: "1px solid rgba(127,226,150,0.35)",
+              color: "#7fe296",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+            }}
+          >
+            {success}
+          </div>
+        )}
 
         {editing ? (
           <>

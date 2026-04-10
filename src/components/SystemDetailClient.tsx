@@ -116,11 +116,11 @@ export default function SystemDetailClient({ system: initialSystem, propertyId, 
       updated_at: new Date().toISOString(),
     };
 
-    const { error: dbError } = await supabase
+    const { data: updatedRows, error: dbError } = await supabase
       .from("systems")
       .update(updates)
       .eq("id", system.id)
-      .eq("property_id", propertyId);
+      .select("*");
 
     if (dbError) {
       setSaving(false);
@@ -128,20 +128,15 @@ export default function SystemDetailClient({ system: initialSystem, propertyId, 
       return;
     }
 
-    const { data: refetched, error: fetchError } = await supabase
-      .from("systems")
-      .select("*")
-      .eq("id", system.id)
-      .maybeSingle();
-
-    setSaving(false);
-
-    if (fetchError || !refetched) {
-      setError("Saved, but could not re-fetch record: " + (fetchError?.message ?? "not found"));
+    if (!updatedRows || updatedRows.length === 0) {
+      setSaving(false);
+      setError("Save failed: no rows were updated. RLS policy may be blocking this write.");
       return;
     }
 
-    setSystem(refetched as System);
+    const refetched = updatedRows[0] as System;
+    setSaving(false);
+    setSystem(refetched);
     setEditing(false);
     setSuccess("Changes saved successfully.");
     router.refresh();

@@ -183,10 +183,7 @@ export default function SystemDetailClient({ system: initialSystem, propertyId, 
 
   return (
     <main>
-      <div style={{ background: "#00aa44", color: "#fff", fontWeight: 900, fontSize: "1rem", padding: "10px 20px", letterSpacing: "0.1em" }}>
-        REAL_ROUTE_MARKER
-      </div>
-      <section className="hero">
+<section className="hero">
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <h1 style={{ margin: 0 }}>{system.name}</h1>
           <StatusBadge status={system.status} />

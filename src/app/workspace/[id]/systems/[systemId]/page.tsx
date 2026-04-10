@@ -188,8 +188,8 @@ export default function SystemDetailPage() {
 
   return (
     <main>
-      <div style={{ background: "#ff3b3b", color: "#fff", fontWeight: 900, fontSize: "1rem", padding: "10px 20px", letterSpacing: "0.1em" }}>
-        EDIT_MODE_TEST_MARKER
+      <div style={{ background: "#00aa44", color: "#fff", fontWeight: 900, fontSize: "1rem", padding: "10px 20px", letterSpacing: "0.1em" }}>
+        REAL_ROUTE_MARKER
       </div>
       <section className="hero">
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
@@ -209,6 +209,15 @@ export default function SystemDetailPage() {
           <Link href={`/workspace/${propertyId}/systems`} className="subpage-nav-home">Systems</Link>
           <div className="subpage-nav-links">
             <Link href={`/workspace/${propertyId}`} className="subnav-pill">{propertyNickname || "Property"}</Link>
+            {!editing && (
+              <button
+                className="subnav-pill"
+                style={{ cursor: "pointer", border: "none", background: "transparent" }}
+                onClick={enterEdit}
+              >
+                Edit System
+              </button>
+            )}
           </div>
         </div>
       </section>

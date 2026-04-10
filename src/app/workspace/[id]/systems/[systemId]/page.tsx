@@ -188,6 +188,9 @@ export default function SystemDetailPage() {
 
   return (
     <main>
+      <div style={{ background: "#ff3b3b", color: "#fff", fontWeight: 900, fontSize: "1rem", padding: "10px 20px", letterSpacing: "0.1em" }}>
+        EDIT_MODE_TEST_MARKER
+      </div>
       <section className="hero">
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <h1 style={{ margin: 0 }}>{system.name}</h1>

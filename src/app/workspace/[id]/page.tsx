@@ -16,6 +16,13 @@ async function resetDemoProperty() {
     .update({ status: "open", closed_at: null, updated_at: new Date().toISOString() })
     .eq("property_id", DEMO_PROPERTY_ID);
 
+  const { data: roomRows } = await supabase
+    .from("rooms")
+    .select("id")
+    .eq("property_id", DEMO_PROPERTY_ID);
+
+  const totalRooms = roomRows?.length ?? 0;
+
   const { data: sessions } = await supabase
     .from("walkthrough_sessions")
     .select("id")
@@ -30,6 +37,7 @@ async function resetDemoProperty() {
       .update({
         status: "active",
         closed_rooms: 0,
+        total_rooms: totalRooms,
         completed_at: null,
         current_room_id: null,
         updated_at: new Date().toISOString(),

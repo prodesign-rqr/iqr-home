@@ -1,38 +1,51 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const DEMO_PROPERTY_ID = "4a7ebc66-6e48-4348-a639-a1877d86f9d9";
 
 export default function HomePage() {
   return (
     <main>
-      <section className="hero">
-        <div
-          style={{
-            display: "inline-block",
-            fontSize: "0.7rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: "#6dd3ff",
-            background: "rgba(109,211,255,0.08)",
-            border: "1px solid rgba(109,211,255,0.2)",
-            borderRadius: 20,
-            padding: "4px 14px",
-            marginBottom: 18,
-          }}
-        >
-          Interactive Demo
+      <section className="hero hero-split">
+        <div className="hero-copy">
+          <div
+            style={{
+              display: "inline-block",
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "#6dd3ff",
+              background: "rgba(109,211,255,0.08)",
+              border: "1px solid rgba(109,211,255,0.2)",
+              borderRadius: 20,
+              padding: "4px 14px",
+              marginBottom: 18,
+            }}
+          >
+            Interactive Demo
+          </div>
+          <h1>IQR Home</h1>
+          <p>
+            A house that can explain itself. IQR Home replaces fragmented property records with a
+            guided, room-by-room commissioning walkthrough that builds a verified baseline — structured,
+            spatial, and permanently accessible.
+          </p>
+          <div className="subpage-nav">
+            <Link href={`/workspace/${DEMO_PROPERTY_ID}`} className="subpage-nav-home">
+              Explore Demo Property
+            </Link>
+          </div>
         </div>
-        <h1>IQR Home</h1>
-        <p>
-          A house that can explain itself. IQR Home replaces fragmented property records with a
-          guided, room-by-room commissioning walkthrough that builds a verified baseline — structured,
-          spatial, and permanently accessible.
-        </p>
-        <div className="subpage-nav">
-          <Link href={`/workspace/${DEMO_PROPERTY_ID}`} className="subpage-nav-home">
-            Explore Demo Property
-          </Link>
+        <div className="hero-image-wrap">
+          <Image
+            src="/demo/demo-home-hero.jpg"
+            alt="IQR Home demo property"
+            width={720}
+            height={540}
+            priority
+            className="hero-image"
+          />
         </div>
       </section>
 

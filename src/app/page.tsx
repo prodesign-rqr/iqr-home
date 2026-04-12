@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 const DEMO_PROPERTY_ID = "4a7ebc66-6e48-4348-a639-a1877d86f9d9";
 
@@ -38,12 +37,10 @@ export default function HomePage() {
           </div>
         </div>
         <div className="hero-image-wrap">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src="/demo/demo-home-hero.jpg"
             alt="IQR Home demo property"
-            width={720}
-            height={540}
-            priority
             className="hero-image"
           />
         </div>

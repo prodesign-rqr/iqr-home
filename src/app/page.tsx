@@ -39,7 +39,7 @@ export default function HomePage() {
         <div className="hero-image-wrap">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/demo/demo-home-hero.jpg"
+            src="https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1200"
             alt="IQR Home demo property"
             className="hero-image"
           />

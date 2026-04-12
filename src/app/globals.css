@@ -60,15 +60,17 @@ main {
 
 .hero-image-wrap {
   min-width: 0;
+  width: 100%;
   overflow: hidden;
   border-radius: 16px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  aspect-ratio: 4 / 3;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .hero-image {
   width: 100%;
-  height: auto;
-  aspect-ratio: 4 / 3;
+  height: 100%;
   object-fit: cover;
   border-radius: 16px;
   display: block;
@@ -81,7 +83,7 @@ main {
     gap: 28px;
   }
 
-  .hero-image {
+  .hero-image-wrap {
     aspect-ratio: 16 / 9;
   }
 }

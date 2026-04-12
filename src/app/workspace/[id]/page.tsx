@@ -120,6 +120,9 @@ export default async function PropertyWorkspacePage({ params }: Props) {
             <Link href={`/workspace/${id}/add-room`} className="subnav-pill">
               + Add Room
             </Link>
+            <Link href={`/workspace/${id}/companycam`} className="subnav-pill">
+              CompanyCam Intake
+            </Link>
             {activeSession ? (
               <Link href={`/workspace/${id}/walkthrough/${activeSession.id}`} className="subnav-pill">
                 Resume Walkthrough
@@ -489,6 +492,7 @@ export default async function PropertyWorkspacePage({ params }: Props) {
         {[
           { label: "Systems", href: `/workspace/${id}/systems`, note: "Available" },
           { label: "QR Tags", href: `/workspace/${id}/qr-tags`, note: "Available" },
+          { label: "CompanyCam Intake", href: `/workspace/${id}/companycam`, note: "Available" },
           { label: "Floor Plans", note: "Planned" },
           { label: "Integrity", href: "/integrity", note: "Available" },
           { label: "Timeline", href: "/service-events", note: "Available" },

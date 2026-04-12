@@ -115,6 +115,41 @@ export interface WalkthroughSession {
   updated_at: string;
 }
 
+export type PhotoSourceType = "companycam" | "manual" | "walkthrough";
+export type PhotoRecordScope = "property" | "room" | "system" | "service_event";
+
+export interface ImportBatch {
+  id: string;
+  property_id: string;
+  companycam_project_id: string;
+  companycam_project_name: string | null;
+  imported_at: string;
+  photo_count: number;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface PhotoRecord {
+  id: string;
+  property_id: string;
+  source_type: PhotoSourceType;
+  source_project_id: string | null;
+  source_photo_id: string | null;
+  source_url: string | null;
+  thumbnail_url: string | null;
+  captured_at: string | null;
+  caption: string | null;
+  notes: string | null;
+  room_id: string | null;
+  zone_id: string | null;
+  system_id: string | null;
+  service_event_id: string | null;
+  record_scope: PhotoRecordScope;
+  import_batch_id: string;
+  metadata_json: Record<string, unknown> | null;
+  created_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {

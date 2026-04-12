@@ -8,12 +8,53 @@ import type { ServiceEntryNodeRecord, ServiceEntryEventRecord } from "../../../l
 
 export const dynamic = "force-dynamic";
 
+const DEMO_PROPERTY_ID = "4a7ebc66-6e48-4348-a639-a1877d86f9d9";
+
+async function resetDemoProperty() {
+  await supabase
+    .from("rooms")
+    .update({ status: "open", closed_at: null, updated_at: new Date().toISOString() })
+    .eq("property_id", DEMO_PROPERTY_ID);
+
+  const { data: sessions } = await supabase
+    .from("walkthrough_sessions")
+    .select("id")
+    .eq("property_id", DEMO_PROPERTY_ID)
+    .order("created_at", { ascending: false });
+
+  if (sessions && sessions.length > 0) {
+    const [keep, ...stale] = sessions;
+
+    await supabase
+      .from("walkthrough_sessions")
+      .update({
+        status: "active",
+        closed_rooms: 0,
+        completed_at: null,
+        current_room_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", keep.id);
+
+    if (stale.length > 0) {
+      await supabase
+        .from("walkthrough_sessions")
+        .update({ status: "abandoned", updated_at: new Date().toISOString() })
+        .in("id", stale.map((s) => s.id));
+    }
+  }
+}
+
 type Props = {
   params: Promise<{ id: string }>;
 };
 
 export default async function PropertyWorkspacePage({ params }: Props) {
   const { id } = await params;
+
+  if (id === DEMO_PROPERTY_ID) {
+    await resetDemoProperty();
+  }
 
   const { data: propertyData } = await supabase
     .from("properties")

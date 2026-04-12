@@ -1,25 +1,38 @@
 import Link from "next/link";
 
+const DEMO_PROPERTY_ID = "4a7ebc66-6e48-4348-a639-a1877d86f9d9";
+
 export default function HomePage() {
   return (
     <main>
       <section className="hero">
+        <div
+          style={{
+            display: "inline-block",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "#6dd3ff",
+            background: "rgba(109,211,255,0.08)",
+            border: "1px solid rgba(109,211,255,0.2)",
+            borderRadius: 20,
+            padding: "4px 14px",
+            marginBottom: 18,
+          }}
+        >
+          Interactive Demo
+        </div>
         <h1>IQR Home</h1>
         <p>
-          A house that can explain itself. Most houses are data-rich but memory-poor. IQR Home
-          replaces fragmented onboarding with a guided, room-by-room commissioning walkthrough
-          that creates a verified baseline property record.
+          A house that can explain itself. IQR Home replaces fragmented property records with a
+          guided, room-by-room commissioning walkthrough that builds a verified baseline — structured,
+          spatial, and permanently accessible.
         </p>
         <div className="subpage-nav">
-          <Link href="/workspace" className="subpage-nav-home">
-            Open Partner Workspace
+          <Link href={`/workspace/${DEMO_PROPERTY_ID}`} className="subpage-nav-home">
+            Explore Demo Property
           </Link>
-          <div className="subpage-nav-links">
-            <Link href="/telemetry" className="subnav-pill">Telemetry</Link>
-            <Link href="/prevention" className="subnav-pill">Prevention</Link>
-            <Link href="/service-events" className="subnav-pill">Service Events</Link>
-            <Link href="/integrity" className="subnav-pill">Integrity</Link>
-          </div>
         </div>
       </section>
 
@@ -96,11 +109,13 @@ export default function HomePage() {
               marginBottom: 12,
             }}
           >
-            Core MVP Flows
+            Demo Flows
           </div>
           {[
-            { label: "Partner Workspace", href: "/workspace" },
-            { label: "New Property", href: "/workspace/new" },
+            { label: "Demo Property Overview", href: `/workspace/${DEMO_PROPERTY_ID}` },
+            { label: "Photo Intake", href: `/workspace/${DEMO_PROPERTY_ID}/companycam` },
+            { label: "Systems", href: `/workspace/${DEMO_PROPERTY_ID}/systems` },
+            { label: "QR Tags", href: `/workspace/${DEMO_PROPERTY_ID}/qr-tags` },
           ].map((link) => (
             <Link
               key={link.href}
@@ -129,7 +144,7 @@ export default function HomePage() {
               marginBottom: 12,
             }}
           >
-            Reference Views
+            Property Intelligence
           </div>
           {[
             { label: "Telemetry", href: "/telemetry" },
@@ -164,9 +179,9 @@ export default function HomePage() {
               marginBottom: 12,
             }}
           >
-            Planned Modules
+            Coming Soon
           </div>
-          {["Systems", "QR Tags", "Floor Plans", "Documents"].map((label) => (
+          {["Floor Plans", "Documents", "Owner Access", "Guest View"].map((label) => (
             <div
               key={label}
               style={{

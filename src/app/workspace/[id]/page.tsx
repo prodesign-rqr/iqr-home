@@ -104,24 +104,18 @@ export default async function PropertyWorkspacePage({ params }: Props) {
             .join(", ") || "Address not recorded"}
         </p>
         <div className="subpage-nav">
-          <Link href="/workspace" className="subpage-nav-home">
-            Workspace
+          <Link href="/" className="subpage-nav-home">
+            ← Demo Home
           </Link>
           <div className="subpage-nav-links">
-            <Link href={`/workspace/${id}/edit`} className="subnav-pill">
-              Edit Property
-            </Link>
             <Link href={`/workspace/${id}/systems`} className="subnav-pill">
               Systems
             </Link>
-            <Link href={`/workspace/${id}/add-floor`} className="subnav-pill">
-              + Add Floor
-            </Link>
-            <Link href={`/workspace/${id}/add-room`} className="subnav-pill">
-              + Add Room
-            </Link>
             <Link href={`/workspace/${id}/companycam`} className="subnav-pill">
-              CompanyCam Intake
+              Photo Intake
+            </Link>
+            <Link href={`/workspace/${id}/qr-tags`} className="subnav-pill">
+              QR Tags
             </Link>
             {activeSession ? (
               <Link href={`/workspace/${id}/walkthrough/${activeSession.id}`} className="subnav-pill">
@@ -492,11 +486,11 @@ export default async function PropertyWorkspacePage({ params }: Props) {
         {[
           { label: "Systems", href: `/workspace/${id}/systems`, note: "Available" },
           { label: "QR Tags", href: `/workspace/${id}/qr-tags`, note: "Available" },
-          { label: "CompanyCam Intake", href: `/workspace/${id}/companycam`, note: "Available" },
-          { label: "Floor Plans", note: "Planned" },
+          { label: "Photo Intake", href: `/workspace/${id}/companycam`, note: "Available" },
+          { label: "Floor Plans", note: "Coming Soon" },
           { label: "Integrity", href: "/integrity", note: "Available" },
           { label: "Timeline", href: "/service-events", note: "Available" },
-          { label: "Documents", note: "Planned" },
+          { label: "Documents", note: "Coming Soon" },
         ].map((mod) =>
           mod.href ? (
             <Link key={mod.label} href={mod.href} style={{ textDecoration: "none", color: "inherit" }}>

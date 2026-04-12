@@ -47,7 +47,7 @@ export default async function CompanyCamIntakePage({ params }: Props) {
   return (
     <main>
       <section className="hero">
-        <h1>CompanyCam Intake</h1>
+        <h1>Photo Intake</h1>
         <p>
           {[property.street_address, property.city, property.state]
             .filter(Boolean)
@@ -55,7 +55,7 @@ export default async function CompanyCamIntakePage({ params }: Props) {
         </p>
         <div className="subpage-nav">
           <Link href={`/workspace/${id}`} className="subpage-nav-home">
-            ← Workspace
+            ← Property
           </Link>
         </div>
       </section>

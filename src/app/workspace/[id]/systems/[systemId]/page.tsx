@@ -54,20 +54,38 @@ const VERIFICATIONS: { value: VerificationStatus; label: string }[] = [
 ];
 
 const CATEGORY_LABEL: Record<string, string> = {
-  hvac: "HVAC", water_heater: "Water Heater", electrical: "Electrical",
-  plumbing: "Plumbing", roof: "Roof", appliance: "Appliance",
-  pool: "Pool / Spa", security: "Security", network: "Network", av: "A/V", other: "Other",
+  hvac: "HVAC",
+  water_heater: "Water Heater",
+  electrical: "Electrical",
+  plumbing: "Plumbing",
+  roof: "Roof",
+  appliance: "Appliance",
+  pool: "Pool / Spa",
+  security: "Security",
+  network: "Network",
+  av: "A/V",
+  other: "Other",
 };
 
 const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "9px 13px", borderRadius: 8,
-  border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)",
-  color: "#ecf3fb", fontSize: "0.9rem", outline: "none",
+  width: "100%",
+  padding: "9px 13px",
+  borderRadius: 8,
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.04)",
+  color: "#ecf3fb",
+  fontSize: "0.9rem",
+  outline: "none",
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.08em",
-  textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6, display: "block",
+  fontSize: "0.72rem",
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "rgba(255,255,255,0.35)",
+  marginBottom: 6,
+  display: "block",
 };
 
 export default function SystemDetailPage() {
@@ -82,6 +100,7 @@ export default function SystemDetailPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState<SystemCategory>("other");
@@ -120,6 +139,7 @@ export default function SystemDetailPage() {
     setVerification(system.verification);
     setNotes(system.notes ?? "");
     setError(null);
+    setSuccess(null);
     setEditing(true);
   }
 
@@ -133,22 +153,41 @@ export default function SystemDetailPage() {
     if (!name.trim()) { setError("System name is required."); return; }
     setSaving(true);
     setError(null);
+    setSuccess(null);
 
     const updates = {
-      name: name.trim(), category,
-      manufacturer: manufacturer.trim(), model: model.trim(),
-      serial_number: serialNumber.trim(), install_date: installDate || null,
-      location: location.trim(), status, verification,
-      notes: notes.trim(), updated_at: new Date().toISOString(),
+      name: name.trim(),
+      category,
+      manufacturer: manufacturer.trim(),
+      model: model.trim(),
+      serial_number: serialNumber.trim(),
+      install_date: installDate || null,
+      location: location.trim(),
+      status,
+      verification,
+      notes: notes.trim(),
+      updated_at: new Date().toISOString(),
     };
 
-    const { error: dbError } = await supabase
-      .from("systems").update(updates).eq("id", system.id).eq("property_id", propertyId);
+    const { data: updatedRows, error: dbError } = await supabase
+      .from("systems")
+      .update(updates)
+      .eq("id", system.id)
+      .eq("property_id", propertyId)
+      .select("*");
 
     setSaving(false);
-    if (dbError) { setError(dbError.message); return; }
-    setSystem({ ...system, ...updates });
+
+    if (dbError) { setError("Save failed: " + dbError.message); return; }
+    if (!updatedRows || updatedRows.length === 0) {
+      setError("Save failed: no rows were updated.");
+      return;
+    }
+
+    setSystem(updatedRows[0] as System);
     setEditing(false);
+    setSuccess("Changes saved successfully.");
+    router.refresh();
   }
 
   if (loading) {
@@ -220,6 +259,16 @@ export default function SystemDetailPage() {
       </section>
 
       <div style={{ padding: "0 24px 48px", display: "grid", gap: 24 }}>
+        {success && (
+          <div style={{
+            padding: "12px 16px", borderRadius: 8,
+            background: "rgba(127,226,150,0.12)", border: "1px solid rgba(127,226,150,0.35)",
+            color: "#7fe296", fontSize: "0.875rem", fontWeight: 600,
+          }}>
+            {success}
+          </div>
+        )}
+
         {editing ? (
           <>
             <div style={{
@@ -316,8 +365,9 @@ export default function SystemDetailPage() {
 
             {error && (
               <div style={{
-                padding: "12px 16px", borderRadius: 8, background: "rgba(255,139,139,0.12)",
-                border: "1px solid rgba(255,139,139,0.3)", color: "#ff8b8b", fontSize: "0.875rem",
+                padding: "12px 16px", borderRadius: 8,
+                background: "rgba(255,139,139,0.12)", border: "1px solid rgba(255,139,139,0.3)",
+                color: "#ff8b8b", fontSize: "0.875rem",
               }}>{error}</div>
             )}
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { Room, System } from "../../lib/database.types";
 import type { PhotoRecordScope } from "../../lib/database.types";
+import { DEMO_PHOTOS, DEMO_PROJECT_ID, DEMO_PROJECT_NAME } from "../../lib/companycam-mock";
 
 export interface CompanyCamPhoto {
   id: string;
@@ -10,12 +11,6 @@ export interface CompanyCamPhoto {
   thumbnail_url: string;
   captured_at: string | null;
   caption: string | null;
-}
-
-export interface CompanyCamProject {
-  id: string;
-  name: string;
-  address?: string;
 }
 
 interface PhotoAssignment {
@@ -33,14 +28,13 @@ interface PhotoDraft extends CompanyCamPhoto {
   assignment: PhotoAssignment;
 }
 
-type IntakeStep = "link" | "preview" | "map" | "confirm" | "done";
+type IntakeMode = "demo" | "live";
+type IntakeStep = "select" | "preview" | "map" | "confirm" | "done";
 
 interface Props {
   propertyId: string;
   rooms: Room[];
   systems: System[];
-  existingProjectId: string | null;
-  existingProjectName: string | null;
   onImportComplete: () => void;
 }
 
@@ -54,42 +48,52 @@ const defaultAssignment = (): PhotoAssignment => ({
   caption: "",
 });
 
-export default function CompanyCamIntake({
-  propertyId,
-  rooms,
-  systems,
-  existingProjectId,
-  existingProjectName,
-  onImportComplete,
-}: Props) {
-  const [step, setStep] = useState<IntakeStep>(existingProjectId ? "preview" : "link");
-  const [projectId, setProjectId] = useState(existingProjectId ?? "");
-  const [projectName, setProjectName] = useState(existingProjectName ?? "");
-  const [apiKey, setApiKey] = useState("");
+export default function CompanyCamIntake({ propertyId, rooms, systems, onImportComplete }: Props) {
+  const [step, setStep] = useState<IntakeStep>("select");
+  const [mode, setMode] = useState<IntakeMode | null>(null);
+  const [projectId, setProjectId] = useState("");
+  const [projectName, setProjectName] = useState("");
   const [photos, setPhotos] = useState<PhotoDraft[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bulkScope, setBulkScope] = useState<PhotoRecordScope>("property");
-  const [bulkRoomId, setBulkRoomId] = useState<string>("");
-  const [bulkSystemId, setBulkSystemId] = useState<string>("");
+  const [bulkRoomId, setBulkRoomId] = useState("");
+  const [bulkSystemId, setBulkSystemId] = useState("");
   const [importBatchNotes, setImportBatchNotes] = useState("");
   const [importedBatchId, setImportedBatchId] = useState<string | null>(null);
   const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
 
-  const fetchPhotos = useCallback(async () => {
-    if (!projectId.trim()) {
+  const loadDemoPhotos = () => {
+    setMode("demo");
+    setProjectId(DEMO_PROJECT_ID);
+    setProjectName(DEMO_PROJECT_NAME);
+    setPhotos(
+      DEMO_PHOTOS.map((p) => ({
+        ...p,
+        selected: true,
+        assignment: { ...defaultAssignment(), caption: p.caption ?? "" },
+      }))
+    );
+    setStep("preview");
+  };
+
+  const loadLivePhotos = async (pid: string, pname: string) => {
+    if (!pid.trim()) {
       setError("Project ID is required.");
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/companycam/photos?project_id=${encodeURIComponent(projectId)}&api_key=${encodeURIComponent(apiKey)}`);
+      const res = await fetch(`/api/companycam/photos?project_id=${encodeURIComponent(pid)}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? `Failed to fetch photos (${res.status})`);
       }
       const data: CompanyCamPhoto[] = await res.json();
+      setMode("live");
+      setProjectId(pid);
+      setProjectName(pname || pid);
       setPhotos(
         data.map((p) => ({
           ...p,
@@ -103,27 +107,20 @@ export default function CompanyCamIntake({
     } finally {
       setLoading(false);
     }
-  }, [projectId, apiKey]);
-
-  const toggleSelect = (id: string) => {
-    setPhotos((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p))
-    );
   };
 
-  const toggleAll = (val: boolean) => {
+  const toggleSelect = (id: string) =>
+    setPhotos((prev) => prev.map((p) => (p.id === id ? { ...p, selected: !p.selected } : p)));
+
+  const toggleAll = (val: boolean) =>
     setPhotos((prev) => prev.map((p) => ({ ...p, selected: val })));
-  };
 
-  const updateAssignment = (id: string, patch: Partial<PhotoAssignment>) => {
+  const updateAssignment = (id: string, patch: Partial<PhotoAssignment>) =>
     setPhotos((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, assignment: { ...p.assignment, ...patch } } : p
-      )
+      prev.map((p) => (p.id === id ? { ...p, assignment: { ...p.assignment, ...patch } } : p))
     );
-  };
 
-  const applyBulkAssignment = () => {
+  const applyBulkAssignment = () =>
     setPhotos((prev) =>
       prev.map((p) => {
         if (!p.selected) return p;
@@ -132,15 +129,14 @@ export default function CompanyCamIntake({
           assignment: {
             ...p.assignment,
             record_scope: bulkScope,
-            room_id: bulkScope === "room" ? (bulkRoomId || null) : null,
+            room_id: bulkScope === "room" ? bulkRoomId || null : null,
             zone_id: null,
-            system_id: bulkScope === "system" ? (bulkSystemId || null) : null,
+            system_id: bulkScope === "system" ? bulkSystemId || null : null,
             service_event_id: null,
           },
         };
       })
     );
-  };
 
   const selectedPhotos = photos.filter((p) => p.selected);
 
@@ -160,6 +156,7 @@ export default function CompanyCamIntake({
           project_id: projectId,
           project_name: projectName,
           notes: importBatchNotes,
+          is_demo: mode === "demo",
           photos: selectedPhotos.map((p) => ({
             source_photo_id: p.id,
             source_url: p.uri,
@@ -172,7 +169,7 @@ export default function CompanyCamIntake({
             system_id: p.assignment.system_id,
             service_event_id: p.assignment.service_event_id,
             record_scope: p.assignment.record_scope,
-            metadata_json: { original_caption: p.caption },
+            metadata_json: { original_caption: p.caption, source_mode: mode },
           })),
         }),
       });
@@ -189,6 +186,17 @@ export default function CompanyCamIntake({
     } finally {
       setLoading(false);
     }
+  };
+
+  const reset = () => {
+    setStep("select");
+    setMode(null);
+    setProjectId("");
+    setProjectName("");
+    setPhotos([]);
+    setError(null);
+    setImportedBatchId(null);
+    setImportBatchNotes("");
   };
 
   return (
@@ -210,29 +218,23 @@ export default function CompanyCamIntake({
         </div>
       )}
 
-      {step === "link" && (
-        <LinkStep
-          projectId={projectId}
-          projectName={projectName}
-          apiKey={apiKey}
+      {step === "select" && (
+        <SelectStep
           loading={loading}
-          onProjectIdChange={setProjectId}
-          onProjectNameChange={setProjectName}
-          onApiKeyChange={setApiKey}
-          onFetch={fetchPhotos}
+          onDemoMode={loadDemoPhotos}
+          onLiveMode={loadLivePhotos}
         />
       )}
 
       {step === "preview" && (
         <PreviewStep
           photos={photos}
-          loading={loading}
           projectId={projectId}
           projectName={projectName}
-          apiKey={apiKey}
+          isDemo={mode === "demo"}
           onToggleSelect={toggleSelect}
           onToggleAll={toggleAll}
-          onRefetch={fetchPhotos}
+          onBack={reset}
           onNext={() => setStep("map")}
         />
       )}
@@ -262,6 +264,7 @@ export default function CompanyCamIntake({
           photos={photos}
           projectId={projectId}
           projectName={projectName}
+          isDemo={mode === "demo"}
           importBatchNotes={importBatchNotes}
           loading={loading}
           rooms={rooms}
@@ -276,10 +279,8 @@ export default function CompanyCamIntake({
         <DoneStep
           batchId={importedBatchId}
           count={selectedPhotos.length}
-          onReset={() => {
-            setStep("preview");
-            setPhotos([]);
-          }}
+          isDemo={mode === "demo"}
+          onReset={reset}
         />
       )}
     </div>
@@ -288,12 +289,12 @@ export default function CompanyCamIntake({
 
 function StepBar({ current }: { current: IntakeStep }) {
   const steps: { key: IntakeStep; label: string }[] = [
-    { key: "link", label: "Link Project" },
+    { key: "select", label: "Select Source" },
     { key: "preview", label: "Preview Photos" },
     { key: "map", label: "Map Photos" },
     { key: "confirm", label: "Confirm Import" },
   ];
-  const order: IntakeStep[] = ["link", "preview", "map", "confirm", "done"];
+  const order: IntakeStep[] = ["select", "preview", "map", "confirm", "done"];
   const currentIdx = order.indexOf(current);
 
   return (
@@ -303,7 +304,10 @@ function StepBar({ current }: { current: IntakeStep }) {
         const isActive = s.key === current;
         const isDone = currentIdx > idx;
         return (
-          <div key={s.key} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : undefined }}>
+          <div
+            key={s.key}
+            style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : undefined }}
+          >
             <div
               style={{
                 padding: "6px 14px",
@@ -328,7 +332,8 @@ function StepBar({ current }: { current: IntakeStep }) {
                 whiteSpace: "nowrap",
               }}
             >
-              {isDone ? "✓ " : ""}{s.label}
+              {isDone ? "✓ " : ""}
+              {s.label}
             </div>
             {i < steps.length - 1 && (
               <div
@@ -347,159 +352,196 @@ function StepBar({ current }: { current: IntakeStep }) {
   );
 }
 
-function LinkStep({
-  projectId,
-  projectName,
-  apiKey,
+function SelectStep({
   loading,
-  onProjectIdChange,
-  onProjectNameChange,
-  onApiKeyChange,
-  onFetch,
+  onDemoMode,
+  onLiveMode,
 }: {
-  projectId: string;
-  projectName: string;
-  apiKey: string;
   loading: boolean;
-  onProjectIdChange: (v: string) => void;
-  onProjectNameChange: (v: string) => void;
-  onApiKeyChange: (v: string) => void;
-  onFetch: () => void;
+  onDemoMode: () => void;
+  onLiveMode: (projectId: string, projectName: string) => void;
 }) {
+  const [liveProjectId, setLiveProjectId] = useState("");
+  const [liveProjectName, setLiveProjectName] = useState("");
+
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      <div
+        style={{
+          padding: "24px",
+          borderRadius: 12,
+          border: "2px solid rgba(109,211,255,0.2)",
+          background: "rgba(109,211,255,0.03)",
+          display: "grid",
+          gap: 16,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "#6dd3ff",
+              marginBottom: 6,
+            }}
+          >
+            Demo Mode
+          </div>
+          <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#ecf3fb", marginBottom: 6 }}>
+            Sample Import — No CompanyCam Account Required
+          </div>
+          <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.6, margin: 0 }}>
+            Load 6 representative sample photos and walk the full intake flow end-to-end. Real
+            structured records will be written to Supabase — this is a full functional test, not a
+            simulation.
+          </p>
+        </div>
+        <div>
+          <button className="btn-primary" onClick={onDemoMode} disabled={loading}>
+            Load Demo Photos
+          </button>
+        </div>
+      </div>
+
+      <div
+        style={{
+          padding: "24px",
+          borderRadius: 12,
+          border: "1px solid rgba(255,255,255,0.07)",
+          background: "rgba(255,255,255,0.015)",
+          display: "grid",
+          gap: 16,
+          opacity: 0.7,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.3)",
+              marginBottom: 6,
+            }}
+          >
+            Live CompanyCam Integration
+          </div>
+          <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#ecf3fb", marginBottom: 6 }}>
+            Connect a Real Project
+          </div>
+          <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.6, margin: 0 }}>
+            Enter your CompanyCam project ID. Credentials are managed server-side via environment
+            variables — no API key entry required in the UI.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span style={labelStyle}>CompanyCam Project ID</span>
+            <input
+              value={liveProjectId}
+              onChange={(e) => setLiveProjectId(e.target.value)}
+              placeholder="e.g. 123456"
+              style={inputStyle}
+            />
+          </label>
+          <label style={{ display: "grid", gap: 6 }}>
+            <span style={labelStyle}>Project Name (optional)</span>
+            <input
+              value={liveProjectName}
+              onChange={(e) => setLiveProjectName(e.target.value)}
+              placeholder="e.g. 123 Oak St — Initial Inspection"
+              style={inputStyle}
+            />
+          </label>
+        </div>
+
+        <div>
+          <button
+            className="btn-secondary"
+            onClick={() => onLiveMode(liveProjectId, liveProjectName)}
+            disabled={loading || !liveProjectId.trim()}
+          >
+            {loading ? "Fetching Photos..." : "Fetch Photos"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DemoBanner() {
   return (
     <div
       style={{
-        padding: "24px",
-        borderRadius: 12,
-        border: "1px solid rgba(255,255,255,0.08)",
-        background: "rgba(255,255,255,0.015)",
-        display: "grid",
-        gap: 20,
+        padding: "8px 14px",
+        borderRadius: 8,
+        background: "rgba(109,211,255,0.07)",
+        border: "1px solid rgba(109,211,255,0.2)",
+        fontSize: "0.78rem",
+        color: "#6dd3ff",
+        marginBottom: 4,
       }}
     >
-      <div>
-        <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 6, color: "#ecf3fb" }}>
-          Link CompanyCam Project
-        </h3>
-        <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
-          Enter your CompanyCam API key and the project ID to link this property. Photos from that
-          project will be imported as structured IQR photo records.
-        </p>
-      </div>
-
-      <div style={{ display: "grid", gap: 14 }}>
-        <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-            CompanyCam API Key
-          </span>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => onApiKeyChange(e.target.value)}
-            placeholder="cc_live_..."
-            style={inputStyle}
-          />
-        </label>
-
-        <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-            CompanyCam Project ID
-          </span>
-          <input
-            value={projectId}
-            onChange={(e) => onProjectIdChange(e.target.value)}
-            placeholder="e.g. 123456"
-            style={inputStyle}
-          />
-        </label>
-
-        <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-            Project Name (optional)
-          </span>
-          <input
-            value={projectName}
-            onChange={(e) => onProjectNameChange(e.target.value)}
-            placeholder="e.g. 123 Oak St — Initial Inspection"
-            style={inputStyle}
-          />
-        </label>
-      </div>
-
-      <div>
-        <button
-          className="btn-primary"
-          onClick={onFetch}
-          disabled={loading || !projectId.trim() || !apiKey.trim()}
-        >
-          {loading ? "Loading Photos..." : "Fetch Photos"}
-        </button>
-      </div>
+      Demo Mode — Sample photos. Real Supabase records will be created on confirm.
     </div>
   );
 }
 
 function PreviewStep({
   photos,
-  loading,
   projectId,
   projectName,
-  apiKey,
+  isDemo,
   onToggleSelect,
   onToggleAll,
-  onRefetch,
+  onBack,
   onNext,
 }: {
   photos: PhotoDraft[];
-  loading: boolean;
   projectId: string;
   projectName: string;
-  apiKey: string;
+  isDemo: boolean;
   onToggleSelect: (id: string) => void;
   onToggleAll: (v: boolean) => void;
-  onRefetch: () => void;
+  onBack: () => void;
   onNext: () => void;
 }) {
   const selected = photos.filter((p) => p.selected).length;
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
+      {isDemo && <DemoBanner />}
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#ecf3fb", marginBottom: 2 }}>
             {projectName || projectId}
           </div>
           <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.35)" }}>
-            {photos.length} photos fetched — {selected} selected
+            {photos.length} photos — {selected} selected
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn-secondary" style={{ fontSize: "0.8rem", padding: "6px 12px" }} onClick={() => onToggleAll(true)}>
+          <button
+            className="btn-secondary"
+            style={{ fontSize: "0.8rem", padding: "6px 12px" }}
+            onClick={() => onToggleAll(true)}
+          >
             Select All
           </button>
-          <button className="btn-secondary" style={{ fontSize: "0.8rem", padding: "6px 12px" }} onClick={() => onToggleAll(false)}>
+          <button
+            className="btn-secondary"
+            style={{ fontSize: "0.8rem", padding: "6px 12px" }}
+            onClick={() => onToggleAll(false)}
+          >
             Deselect All
-          </button>
-          <button className="btn-secondary" style={{ fontSize: "0.8rem", padding: "6px 12px" }} onClick={onRefetch} disabled={loading}>
-            Refresh
           </button>
         </div>
       </div>
-
-      {photos.length === 0 && !loading && (
-        <div
-          style={{
-            padding: "40px 24px",
-            borderRadius: 12,
-            border: "1px dashed rgba(255,255,255,0.1)",
-            textAlign: "center",
-            color: "rgba(255,255,255,0.3)",
-            fontSize: "0.875rem",
-          }}
-        >
-          No photos found in this project. Verify the project ID and try again.
-        </div>
-      )}
 
       <div
         style={{
@@ -524,7 +566,13 @@ function PreviewStep({
               position: "relative",
             }}
           >
-            <div style={{ position: "relative", paddingTop: "75%", background: "rgba(255,255,255,0.04)" }}>
+            <div
+              style={{
+                position: "relative",
+                paddingTop: "75%",
+                background: "rgba(255,255,255,0.04)",
+              }}
+            >
               {photo.thumbnail_url ? (
                 <img
                   src={photo.thumbnail_url}
@@ -589,7 +637,9 @@ function PreviewStep({
                 </div>
               )}
               {photo.captured_at && (
-                <div style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", marginTop: 2 }}>
+                <div
+                  style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", marginTop: 2 }}
+                >
                   {new Date(photo.captured_at).toLocaleDateString()}
                 </div>
               )}
@@ -598,13 +648,14 @@ function PreviewStep({
         ))}
       </div>
 
-      {photos.length > 0 && (
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button className="btn-primary" onClick={onNext} disabled={selected === 0}>
-            Map {selected} Photo{selected !== 1 ? "s" : ""} →
-          </button>
-        </div>
-      )}
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <button className="btn-secondary" onClick={onBack}>
+          ← Change Source
+        </button>
+        <button className="btn-primary" onClick={onNext} disabled={selected === 0}>
+          Map {selected} Photo{selected !== 1 ? "s" : ""} →
+        </button>
+      </div>
     </div>
   );
 }
@@ -654,10 +705,19 @@ function MapStep({
           background: "rgba(109,211,255,0.03)",
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "#6dd3ff", marginBottom: 14 }}>
+        <div
+          style={{ fontWeight: 700, fontSize: "0.85rem", color: "#6dd3ff", marginBottom: 14 }}
+        >
           Bulk Assignment — Apply to All Selected Photos
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "auto 1fr 1fr auto", gap: 12, alignItems: "end" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr 1fr auto",
+            gap: 12,
+            alignItems: "end",
+          }}
+        >
           <label style={{ display: "grid", gap: 6 }}>
             <span style={labelStyle}>Scope</span>
             <select
@@ -675,10 +735,16 @@ function MapStep({
           {bulkScope === "room" && (
             <label style={{ display: "grid", gap: 6 }}>
               <span style={labelStyle}>Room</span>
-              <select value={bulkRoomId} onChange={(e) => onBulkRoomChange(e.target.value)} style={inputStyle}>
+              <select
+                value={bulkRoomId}
+                onChange={(e) => onBulkRoomChange(e.target.value)}
+                style={inputStyle}
+              >
                 <option value="">— Select Room —</option>
                 {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
                 ))}
               </select>
             </label>
@@ -687,17 +753,27 @@ function MapStep({
           {bulkScope === "system" && (
             <label style={{ display: "grid", gap: 6 }}>
               <span style={labelStyle}>System</span>
-              <select value={bulkSystemId} onChange={(e) => onBulkSystemChange(e.target.value)} style={inputStyle}>
+              <select
+                value={bulkSystemId}
+                onChange={(e) => onBulkSystemChange(e.target.value)}
+                style={inputStyle}
+              >
                 <option value="">— Select System —</option>
                 {systems.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
                 ))}
               </select>
             </label>
           )}
 
           <div style={{ alignSelf: "end" }}>
-            <button className="btn-secondary" style={{ padding: "9px 18px", fontSize: "0.82rem" }} onClick={onApplyBulk}>
+            <button
+              className="btn-secondary"
+              style={{ padding: "9px 18px", fontSize: "0.82rem" }}
+              onClick={onApplyBulk}
+            >
               Apply to Selected
             </button>
           </div>
@@ -705,7 +781,16 @@ function MapStep({
       </div>
 
       <div>
-        <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
+        <div
+          style={{
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.3)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            marginBottom: 12,
+          }}
+        >
           Individual Photo Assignments ({selected.length})
         </div>
         <div style={{ display: "grid", gap: 10 }}>
@@ -734,13 +819,33 @@ function MapStep({
                   <img
                     src={photo.thumbnail_url}
                     alt=""
-                    style={{ width: 48, height: 36, objectFit: "cover", borderRadius: 6, display: "block" }}
+                    style={{
+                      width: 48,
+                      height: 36,
+                      objectFit: "cover",
+                      borderRadius: 6,
+                      display: "block",
+                    }}
                   />
                 ) : (
-                  <div style={{ width: 48, height: 36, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+                  <div
+                    style={{
+                      width: 48,
+                      height: 36,
+                      borderRadius: 6,
+                      background: "rgba(255,255,255,0.06)",
+                    }}
+                  />
                 )}
                 <div>
-                  <div style={{ fontSize: "0.83rem", fontWeight: 600, color: "#ecf3fb", marginBottom: 2 }}>
+                  <div
+                    style={{
+                      fontSize: "0.83rem",
+                      fontWeight: 600,
+                      color: "#ecf3fb",
+                      marginBottom: 2,
+                    }}
+                  >
                     {photo.assignment.caption || photo.caption || `Photo ${photo.id.slice(-6)}`}
                   </div>
                   <ScopeChip assignment={photo.assignment} rooms={rooms} systems={systems} />
@@ -753,9 +858,8 @@ function MapStep({
               {expandedPhoto === photo.id && (
                 <div
                   style={{
-                    padding: "0 14px 16px",
+                    padding: "14px",
                     borderTop: "1px solid rgba(255,255,255,0.05)",
-                    paddingTop: 14,
                     display: "grid",
                     gap: 12,
                   }}
@@ -786,12 +890,16 @@ function MapStep({
                         <span style={labelStyle}>Room</span>
                         <select
                           value={photo.assignment.room_id ?? ""}
-                          onChange={(e) => onUpdateAssignment(photo.id, { room_id: e.target.value || null })}
+                          onChange={(e) =>
+                            onUpdateAssignment(photo.id, { room_id: e.target.value || null })
+                          }
                           style={inputStyle}
                         >
                           <option value="">— Select Room —</option>
                           {rooms.map((r) => (
-                            <option key={r.id} value={r.id}>{r.name}</option>
+                            <option key={r.id} value={r.id}>
+                              {r.name}
+                            </option>
                           ))}
                         </select>
                       </label>
@@ -802,12 +910,16 @@ function MapStep({
                         <span style={labelStyle}>System</span>
                         <select
                           value={photo.assignment.system_id ?? ""}
-                          onChange={(e) => onUpdateAssignment(photo.id, { system_id: e.target.value || null })}
+                          onChange={(e) =>
+                            onUpdateAssignment(photo.id, { system_id: e.target.value || null })
+                          }
                           style={inputStyle}
                         >
                           <option value="">— Select System —</option>
                           {systems.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
                           ))}
                         </select>
                       </label>
@@ -841,14 +953,26 @@ function MapStep({
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <button className="btn-secondary" onClick={onBack}>← Back</button>
-        <button className="btn-primary" onClick={onNext}>Review Import →</button>
+        <button className="btn-secondary" onClick={onBack}>
+          ← Back
+        </button>
+        <button className="btn-primary" onClick={onNext}>
+          Review Import →
+        </button>
       </div>
     </div>
   );
 }
 
-function ScopeChip({ assignment, rooms, systems }: { assignment: PhotoAssignment; rooms: Room[]; systems: System[] }) {
+function ScopeChip({
+  assignment,
+  rooms,
+  systems,
+}: {
+  assignment: PhotoAssignment;
+  rooms: Room[];
+  systems: System[];
+}) {
   let label = "Property";
   if (assignment.record_scope === "room") {
     const r = rooms.find((x) => x.id === assignment.room_id);
@@ -880,6 +1004,7 @@ function ConfirmStep({
   photos,
   projectId,
   projectName,
+  isDemo,
   importBatchNotes,
   loading,
   rooms,
@@ -891,6 +1016,7 @@ function ConfirmStep({
   photos: PhotoDraft[];
   projectId: string;
   projectName: string;
+  isDemo: boolean;
   importBatchNotes: string;
   loading: boolean;
   rooms: Room[];
@@ -907,6 +1033,8 @@ function ConfirmStep({
 
   return (
     <div style={{ display: "grid", gap: 24 }}>
+      {isDemo && <DemoBanner />}
+
       <div
         style={{
           padding: "24px",
@@ -923,7 +1051,7 @@ function ConfirmStep({
           {[
             { label: "Photos", value: selected.length },
             { label: "Project", value: projectName || projectId },
-            { label: "Source", value: "CompanyCam" },
+            { label: "Source", value: isDemo ? "Demo / Sample" : "CompanyCam" },
           ].map((s) => (
             <div
               key={s.label}
@@ -934,10 +1062,27 @@ function ConfirmStep({
                 background: "rgba(255,255,255,0.02)",
               }}
             >
-              <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#ecf3fb", marginBottom: 4 }}>
+              <div
+                style={{
+                  fontSize: "1.2rem",
+                  fontWeight: 800,
+                  color: "#ecf3fb",
+                  marginBottom: 4,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {s.value}
               </div>
-              <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              <div
+                style={{
+                  fontSize: "0.72rem",
+                  color: "rgba(255,255,255,0.3)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
                 {s.label}
               </div>
             </div>
@@ -945,7 +1090,16 @@ function ConfirmStep({
         </div>
 
         <div>
-          <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>
+          <div
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.3)",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              marginBottom: 10,
+            }}
+          >
             Scope Breakdown
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -967,6 +1121,21 @@ function ConfirmStep({
           </div>
         </div>
 
+        <div
+          style={{
+            padding: "12px 14px",
+            borderRadius: 8,
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            fontSize: "0.8rem",
+            color: "rgba(255,255,255,0.4)",
+            lineHeight: 1.6,
+          }}
+        >
+          CompanyCam is the source. IQR owns the structured record. Each confirmed photo becomes a
+          first-class IQR photo record in Supabase, linked to this property.
+        </div>
+
         <label style={{ display: "grid", gap: 6 }}>
           <span style={labelStyle}>Batch Notes (optional)</span>
           <textarea
@@ -980,7 +1149,16 @@ function ConfirmStep({
       </div>
 
       <div>
-        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>
+        <div
+          style={{
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            color: "rgba(255,255,255,0.3)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            marginBottom: 10,
+          }}
+        >
           Photos ({selected.length})
         </div>
         <div style={{ display: "grid", gap: 6 }}>
@@ -999,11 +1177,30 @@ function ConfirmStep({
               }}
             >
               {photo.thumbnail_url ? (
-                <img src={photo.thumbnail_url} alt="" style={{ width: 36, height: 28, objectFit: "cover", borderRadius: 4 }} />
+                <img
+                  src={photo.thumbnail_url}
+                  alt=""
+                  style={{ width: 36, height: 28, objectFit: "cover", borderRadius: 4 }}
+                />
               ) : (
-                <div style={{ width: 36, height: 28, borderRadius: 4, background: "rgba(255,255,255,0.06)" }} />
+                <div
+                  style={{
+                    width: 36,
+                    height: 28,
+                    borderRadius: 4,
+                    background: "rgba(255,255,255,0.06)",
+                  }}
+                />
               )}
-              <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <div
+                style={{
+                  fontSize: "0.82rem",
+                  color: "rgba(255,255,255,0.6)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {photo.assignment.caption || photo.caption || `Photo ${photo.id.slice(-6)}`}
               </div>
               <ScopeChip assignment={photo.assignment} rooms={rooms} systems={systems} />
@@ -1013,7 +1210,9 @@ function ConfirmStep({
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <button className="btn-secondary" onClick={onBack} disabled={loading}>← Back</button>
+        <button className="btn-secondary" onClick={onBack} disabled={loading}>
+          ← Back
+        </button>
         <button className="btn-primary" onClick={onConfirm} disabled={loading}>
           {loading ? "Importing..." : `Confirm Import (${selected.length} photos)`}
         </button>
@@ -1025,10 +1224,12 @@ function ConfirmStep({
 function DoneStep({
   batchId,
   count,
+  isDemo,
   onReset,
 }: {
   batchId: string | null;
   count: number;
+  isDemo: boolean;
   onReset: () => void;
 }) {
   return (
@@ -1045,20 +1246,27 @@ function DoneStep({
     >
       <div style={{ fontSize: "2rem", fontWeight: 800, color: "#7fe296" }}>{count}</div>
       <div style={{ fontSize: "1rem", fontWeight: 700, color: "#ecf3fb" }}>
-        Photos Imported Successfully
+        {isDemo ? "Demo Import Complete" : "Photos Imported Successfully"}
       </div>
-      <div style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
-        All selected photos have been converted to structured IQR photo records and linked to this
-        property. CompanyCam remains the source — IQR is the record of authority.
+      <div
+        style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}
+      >
+        {isDemo
+          ? "All sample photos were written as real structured IQR photo records in Supabase. The full flow is verified end-to-end."
+          : "All selected photos have been converted to structured IQR photo records and linked to this property."}
+        {" "}
+        CompanyCam is the source — IQR is the record of authority.
       </div>
       {batchId && (
-        <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.2)", fontFamily: "monospace" }}>
+        <div
+          style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.2)", fontFamily: "monospace" }}
+        >
           Batch ID: {batchId}
         </div>
       )}
       <div>
         <button className="btn-secondary" onClick={onReset}>
-          Import More Photos
+          Start New Import
         </button>
       </div>
     </div>

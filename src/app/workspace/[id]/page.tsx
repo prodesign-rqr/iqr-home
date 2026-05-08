@@ -247,6 +247,35 @@ export default async function PropertyWorkspacePage({ params }: Props) {
           </div>
         )}
 
+        <Link href="/integrity" style={{ textDecoration: "none", color: "inherit" }}>
+          <div
+            style={{
+              padding: "16px 20px",
+              borderRadius: 12,
+              border: "1px solid rgba(255,210,100,0.25)",
+              background: "rgba(255,210,100,0.04)",
+              marginBottom: 24,
+              display: "grid",
+              gridTemplateColumns: "1fr auto",
+              alignItems: "center",
+              gap: 16,
+              cursor: "pointer",
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: 4, color: "#ecf3fb" }}>
+                Record Integrity
+              </div>
+              <div style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                Review missing fields, unverified records, orphaned events, and documentation gaps.
+              </div>
+            </div>
+            <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "rgba(255,210,100,0.7)", whiteSpace: "nowrap" }}>
+              Review →
+            </div>
+          </div>
+        </Link>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 32 }}>
           <div>
             <div
